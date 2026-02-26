@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { runOneShot } from "./oneshot.js";
 import { runChat } from "./chat.js";
 import { VALID_MODES } from "./constants.js";
+import { ChatRuntimeError, ChatUsageError } from "./chat-session.js";
 import { buildSetupNonInteractiveMessage, runSetup, SetupUsageError, supportsInteractiveSetup } from "./setup.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -104,7 +105,15 @@ program
   .option("--no-spinner", "Disable spinner")
   .option("--copy", "Auto-copy result to clipboard")
   .action(async (opts) => {
-    await runChat(opts);
+    try {
+      await runChat(opts);
+    } catch (err) {
+      if (err instanceof ChatUsageError || err instanceof ChatRuntimeError) {
+        process.stderr.write(`${err.message}\n`);
+        process.exit(err.exitCode);
+      }
+      throw err;
+    }
   });
 
 program

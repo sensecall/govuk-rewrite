@@ -15,9 +15,9 @@ const KEY_INFO: Record<Provider, { envVar: string; link: string }> = {
   },
 };
 
-export function writeMissingApiKeyError(provider: Provider): void {
+export function buildMissingApiKeyErrorLines(provider: Provider): string[] {
   const info = KEY_INFO[provider];
-  const lines: string[] = [
+  return [
     `Error: no API key found for provider \"${provider}\".`,
     "",
     `Set the ${info.envVar} environment variable:`,
@@ -28,5 +28,12 @@ export function writeMissingApiKeyError(provider: Provider): void {
     "Using a different provider? Pass --provider openai | anthropic | openrouter",
     "",
   ];
-  process.stderr.write(lines.join("\n"));
+}
+
+export function buildMissingApiKeyErrorMessage(provider: Provider): string {
+  return buildMissingApiKeyErrorLines(provider).join("\n");
+}
+
+export function writeMissingApiKeyError(provider: Provider): void {
+  process.stderr.write(buildMissingApiKeyErrorMessage(provider));
 }

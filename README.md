@@ -47,6 +47,9 @@ Interactive mode:
 govuk-rewrite chat
 ```
 
+Chat stays open until you run `/quit` or use `Ctrl+C` / `Ctrl+D`.
+The composer uses a Codex-style prompt with placeholder text (`Paste text to rewrite`) and a hint row (`? for shortcuts`).
+
 Interactive commands:
 
 ```text
@@ -64,6 +67,14 @@ Interactive commands:
 /quit
 ```
 
+Chat shortcuts:
+
+```text
+Ctrl+C / Ctrl+D   Exit chat
+Ctrl+L            Clear transcript
+?                 Toggle shortcut help
+```
+
 ### Setup flow
 
 - `govuk-rewrite setup` runs an interactive wizard.
@@ -76,6 +87,7 @@ Auto-prompt behavior:
 
 - In one-shot and `chat` modes, if the API key is missing and both stdin/stdout are TTY, the CLI asks:
   - `No API key found. Run setup now? [Y/n]`
+- In Ink chat, setup prompts are shown inline in the composer.
 - In non-interactive contexts (for example pipes), auto-prompting is disabled.
 
 ### `govuk-rewrite-core` (Composable API)
