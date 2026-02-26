@@ -102,7 +102,14 @@
       text-decoration: underline;
     }
 
-    .github-link {
+    .header-links {
+      display: inline-flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .github-link,
+    .npm-link {
       color: #b1b4b6;
       font-size: 0.9rem;
       text-decoration: none;
@@ -111,17 +118,13 @@
       gap: 0.4rem;
     }
 
-    .github-link:hover {
+    .github-link:hover,
+    .npm-link:hover {
       color: #ffffff;
     }
 
     section {
       padding: 2.5rem 0;
-      border-bottom: 1px solid var(--border);
-    }
-
-    section:last-of-type {
-      border-bottom: none;
     }
 
     h1 {
@@ -151,7 +154,7 @@
 
     .hero {
       padding-top: 4rem;
-      padding-bottom: 4rem;
+      padding-bottom: 3rem;
     }
 
     .hero h1 {
@@ -192,8 +195,8 @@
     }
 
     .terminal-demo-wrap {
-      margin-top: 2.5rem;
-      max-width: 46rem;
+      margin-top: 1rem;
+      max-width: none;
     }
 
     .terminal-demo-label {
@@ -203,6 +206,82 @@
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: var(--muted);
+    }
+
+    .modes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+      gap: 1.25rem;
+      margin-top: 1.25rem;
+    }
+
+    .mode-card {
+      border: 1px solid var(--border);
+      border-top: 3px solid var(--accent);
+      border-radius: 4px;
+      padding: 1.35rem 1.25rem 1.25rem;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .mode-card h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .mode-card__desc {
+      color: var(--muted);
+      font-size: 0.925rem;
+      margin-bottom: 1rem;
+      margin-top: 0;
+    }
+
+    .mode-card__cmd {
+      display: flex;
+      align-items: center;
+      background: #0b0c0c;
+      border-radius: 5px;
+      padding: 0.65rem 1rem;
+      margin-bottom: 1.1rem;
+    }
+
+    .mode-card__cmd code {
+      background: none;
+      border: none;
+      color: #f3f2f1;
+      font-size: 0.975rem;
+      padding: 0;
+      letter-spacing: 0.01em;
+    }
+
+    .mode-card__features {
+      list-style: none;
+      margin: 0 0 1.1rem 0;
+      padding: 0;
+      flex: 1;
+    }
+
+    .mode-card__features li {
+      padding: 0.22rem 0;
+      padding-left: 1rem;
+      position: relative;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .mode-card__features li::before {
+      content: "–";
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+    }
+
+    .mode-card__link {
+      font-size: 0.875rem;
+      margin-top: auto;
+      display: inline-block;
     }
 
     .terminal-demo {
@@ -437,12 +516,14 @@
   <header class="site-header" role="banner">
     <div class="container">
       <a href="." class="site-title" aria-label="govuk-rewrite home">govuk-rewrite</a>
-      <a href="https://github.com/sensecall/govuk-rewrite" class="github-link" aria-label="View govuk-rewrite on GitHub">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
-          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
-        </svg>
-        GitHub
-      </a>
+      <div class="header-links">
+        <a href="https://github.com/sensecall/govuk-rewrite" class="github-link" aria-label="View govuk-rewrite on GitHub">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          GitHub
+        </a>
+      </div>
     </div>
   </header>
 
@@ -457,27 +538,63 @@
           </div>
           <p class="install-block__alt">or run once with <code>npx govuk-rewrite "your text"</code></p>
         </div>
+      </div>
+    </section>
 
-        <div class="terminal-demo-wrap" aria-label="Simulated terminal demo">
-          <p class="terminal-demo-label">Demo</p>
-          <div class="terminal-demo">
-            <div class="terminal-demo__bar" aria-hidden="true">
-              <span class="terminal-demo__dot"></span>
-              <span class="terminal-demo__dot"></span>
-              <span class="terminal-demo__dot"></span>
+    <section aria-labelledby="modes-title">
+      <div class="container">
+        <h2 id="modes-title">Two ways to use it</h2>
+        <div class="modes-grid">
+          <article class="mode-card" aria-labelledby="oneshot-title">
+            <h3 id="oneshot-title">One-shot rewrite</h3>
+            <p class="mode-card__desc">Run once and exit. Works in scripts, pipes, and automation.</p>
+            <div class="mode-card__cmd">
+              <code>govuk-rewrite "your text"</code>
             </div>
-            <div class="terminal-demo__screen" id="terminal-demo-screen"></div>
-          </div>
-          <div class="terminal-demo__controls">
-            <button
-              type="button"
-              class="terminal-demo__replay"
-              id="terminal-demo-replay"
-              aria-label="Replay simulated terminal demo"
-            >
-              Replay
-            </button>
-          </div>
+            <div class="terminal-demo-wrap" aria-label="Simulated terminal demo" hidden>
+              <p class="terminal-demo-label">Demo</p>
+              <div class="terminal-demo">
+                <div class="terminal-demo__bar" aria-hidden="true">
+                  <span class="terminal-demo__dot"></span>
+                  <span class="terminal-demo__dot"></span>
+                  <span class="terminal-demo__dot"></span>
+                </div>
+                <div class="terminal-demo__screen" id="terminal-demo-screen"></div>
+              </div>
+              <div class="terminal-demo__controls">
+                <button
+                  type="button"
+                  class="terminal-demo__replay"
+                  id="terminal-demo-replay"
+                  aria-label="Replay simulated terminal demo"
+                >
+                  Replay
+                </button>
+              </div>
+            </div>
+            <ul class="mode-card__features">
+              <li>Pass text as an argument or pipe from stdin</li>
+              <li>Flags like <code>--explain</code>, <code>--diff</code>, <code>--check</code>, and <code>--json</code> for different output formats</li>
+              <li>Pipe-safe — no spinner artefacts in piped or scripted output</li>
+              <li>Exit code <code>0</code> on success, <code>1</code> on error, <code>2</code> on bad input</li>
+            </ul>
+            <a class="mode-card__link" href="#options-title">See all flags &darr;</a>
+          </article>
+
+          <article class="mode-card" aria-labelledby="chat-mode-title">
+            <h3 id="chat-mode-title">Chat mode</h3>
+            <p class="mode-card__desc">Persistent session with slash commands, history, and clipboard.</p>
+            <div class="mode-card__cmd">
+              <code>govuk-rewrite chat</code>
+            </div>
+            <ul class="mode-card__features">
+              <li>Slash commands to switch provider, model, mode, and context mid-session</li>
+              <li>Press <code>↑</code> to load the last rewrite output back into the prompt — re-rewrite without copy-pasting</li>
+              <li>Rewritten text copied to clipboard automatically</li>
+              <li>All one-shot flags accepted; settings persist until you change them</li>
+            </ul>
+            <a class="mode-card__link" href="#chat-title">Learn more &darr;</a>
+          </article>
         </div>
       </div>
     </section>
@@ -505,10 +622,6 @@
           <li>
             <strong>JSON mode</strong>
             <span>Return machine-readable output with <code>--json</code>.</span>
-          </li>
-          <li>
-            <strong>Interactive mode</strong>
-            <span>Iterative rewrites in a persistent session with slash commands and history.</span>
           </li>
           <li>
             <strong>Pipe-safe output</strong>
@@ -600,16 +713,12 @@
           <pre><code>govuk-rewrite --mode error-message --context "HMRC self-assessment" "Sorry, something went wrong. Please try again."</code></pre>
         </div>
 
-        <div class="example">
-          <p>Start an interactive session</p>
-          <pre><code>govuk-rewrite chat</code></pre>
-        </div>
       </div>
     </section>
 
     <section aria-labelledby="chat-title">
       <div class="container">
-        <h2 id="chat-title">Interactive mode</h2>
+        <h2 id="chat-title">Chat mode</h2>
         <p class="muted">Start a persistent session to rewrite text iteratively. Settings persist across submissions until you change them with a slash command.</p>
 
         <div class="example" style="margin-top: 1rem;">
