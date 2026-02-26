@@ -8,6 +8,7 @@ import { isStdinPiped, readStdin, shouldUseSpinner, writeClipboard } from "./io.
 import { formatOutput, selectOutputMode } from "./output.js";
 import { VALID_MODES, VALID_PROVIDERS } from "./constants.js";
 import * as setup from "./setup.js";
+import { resolveConfigWithAutoSetup } from "./session-config.js";
 
 export interface OneShotOptions {
   explain?: boolean;
@@ -39,19 +40,7 @@ export async function resolveConfigForOneShot(
   setupRunner: typeof setup.maybeRunInteractiveSetupOnMissingKey = setup.maybeRunInteractiveSetupOnMissingKey,
   configResolver: typeof resolveConfig = resolveConfig
 ): Promise<ResolvedConfig> {
-  let config = configResolver(overrides);
-
-  if (!config.apiKey) {
-    const autoSetup = await setupRunner({
-      provider: config.provider,
-      configPath: overrides.config,
-    });
-    if (autoSetup.ran) {
-      config = configResolver(overrides);
-    }
-  }
-
-  return config;
+  return resolveConfigWithAutoSetup(overrides, setupRunner, configResolver);
 }
 
 export async function runOneShot(

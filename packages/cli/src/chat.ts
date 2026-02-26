@@ -11,6 +11,7 @@ import type { ChatState } from "./chat-commands.js";
 import { shouldUseSpinner, writeClipboard } from "./io.js";
 import { formatOutput, selectOutputMode } from "./output.js";
 import * as setup from "./setup.js";
+import { resolveConfigWithAutoSetup } from "./session-config.js";
 
 export interface ChatOptions {
   explain?: boolean;
@@ -39,19 +40,7 @@ export async function resolveConfigForChat(
   setupRunner: typeof setup.maybeRunInteractiveSetupOnMissingKey = setup.maybeRunInteractiveSetupOnMissingKey,
   configResolver: typeof resolveConfig = resolveConfig
 ): Promise<ResolvedConfig> {
-  let config = configResolver(overrides);
-
-  if (!config.apiKey) {
-    const autoSetup = await setupRunner({
-      provider: config.provider,
-      configPath: overrides.config,
-    });
-    if (autoSetup.ran) {
-      config = configResolver(overrides);
-    }
-  }
-
-  return config;
+  return resolveConfigWithAutoSetup(overrides, setupRunner, configResolver);
 }
 
 export async function processChatInput(
@@ -173,11 +162,11 @@ export async function runChat(opts: ChatOptions): Promise<void> {
   rl.setPrompt("govuk-rewrite> ");
   rl.prompt();
 
-  for await (const line of rl) {
+  const handleLine = async (line: string): Promise<void> => {
     const trimmed = line.trim();
     if (!trimmed) {
       rl.prompt();
-      continue;
+      return;
     }
 
     if (trimmed.startsWith("/")) {
@@ -187,10 +176,11 @@ export async function runChat(opts: ChatOptions): Promise<void> {
         process.stderr.write(message + "\n");
       }
       if (command.quit) {
-        break;
+        rl.close();
+        return;
       }
       rl.prompt();
-      continue;
+      return;
     }
 
     const spinner = shouldUseSpinner(state.spinner) ? ora("Rewriting…").start() : null;
@@ -219,8 +209,9 @@ export async function runChat(opts: ChatOptions): Promise<void> {
         apiKey = resolveApiKeyForProvider(state.provider);
         if (!apiKey) {
           writeMissingApiKeyError(state.provider);
+          rl.resume();
           rl.prompt();
-          continue;
+          return;
         }
       }
 
@@ -242,6 +233,7 @@ export async function runChat(opts: ChatOptions): Promise<void> {
       );
 
       spinner?.stop();
+      process.stdin.resume();
 
       const output = formatOutput({
         result,
@@ -260,12 +252,19 @@ export async function runChat(opts: ChatOptions): Promise<void> {
       }
     } catch (err) {
       spinner?.fail();
+      process.stdin.resume();
       const message = err instanceof Error ? err.message : String(err);
       process.stderr.write(`Error: ${message}\n`);
     }
 
+    rl.resume();
     rl.prompt();
-  }
+  };
 
-  rl.close();
+  rl.on("line", (line: string) => {
+    rl.pause();
+    void handleLine(line);
+  });
+
+  await new Promise<void>((resolve) => rl.once("close", resolve));
 }

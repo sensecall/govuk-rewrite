@@ -130,7 +130,7 @@ export function resolveConfig(cliOverrides: CliOverrides = {}): ResolvedConfig {
   const cliProvider = toProvider(cliOverrides.provider);
   if (cliProvider) merged.provider = cliProvider;
   if (cliOverrides.model) merged.model = cliOverrides.model;
-  if (cliOverrides.timeout) merged.timeoutMs = cliOverrides.timeout;
+  if (cliOverrides.timeout != null) merged.timeoutMs = cliOverrides.timeout;
 
   const modelExplicitlySet = fileConfig.model ?? envConfig.model ?? cliOverrides.model;
   if (!modelExplicitlySet) {

@@ -72,7 +72,7 @@ export async function rewrite(
 
   const body: AnthropicRequest = {
     model: options.model,
-    max_tokens: 4096,
+    max_tokens: 8192,
     system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],
     tools: [TOOL_DEFINITION],
