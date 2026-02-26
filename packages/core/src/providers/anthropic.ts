@@ -49,6 +49,10 @@ interface AnthropicResponse {
     name?: string;
     input?: RewriteResult;
   }>;
+  usage?: {
+    input_tokens: number;
+    output_tokens: number;
+  };
   error?: {
     message: string;
     type: string;
@@ -72,7 +76,7 @@ export async function rewrite(
 
   const body: AnthropicRequest = {
     model: options.model,
-    max_tokens: 4096,
+    max_tokens: 8192,
     system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],
     tools: [TOOL_DEFINITION],
@@ -114,5 +118,13 @@ export async function rewrite(
     throw new Error("Anthropic returned no tool use result");
   }
 
-  return toolUse.input;
+  const result = toolUse.input;
+  if (data.usage) {
+    result.usage = {
+      inputTokens: data.usage.input_tokens,
+      outputTokens: data.usage.output_tokens,
+    };
+  }
+
+  return result;
 }

@@ -1,0 +1,41 @@
+{
+  "name": "govuk-rewrite-core",
+  "version": "0.1.0",
+  "description": "Core engine for GOV.UK rewrite tooling",
+  "author": "Dan Sensecall",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sensecall/govuk-rewrite",
+    "directory": "packages/core"
+  },
+  "sideEffects": false,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "node --eval \"['dist','tsconfig.tsbuildinfo'].forEach(p=>require('fs').rmSync(p,{recursive:true,force:true}))\"",
+    "prebuild": "npm run clean",
+    "prepublishOnly": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

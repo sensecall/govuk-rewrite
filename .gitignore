@@ -1,5 +1,8 @@
 node_modules
 dist
+packages/*/dist
+packages/*/tsconfig.tsbuildinfo
 .env
 AGENTS.md
 BRIEF.md
+reports/

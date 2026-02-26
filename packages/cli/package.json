@@ -1,0 +1,54 @@
+{
+  "name": "govuk-rewrite",
+  "version": "0.2.0",
+  "description": "A tiny CLI that rewrites text into GOV.UK-style content",
+  "author": "Dan Sensecall",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sensecall/govuk-rewrite",
+    "directory": "packages/cli"
+  },
+  "type": "module",
+  "bin": {
+    "govuk-rewrite": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "govuk",
+    "content",
+    "rewrite",
+    "cli"
+  ],
+  "dependencies": {
+    "commander": "^12.1.0",
+    "govuk-rewrite-core": "^0.1.0",
+    "ink": "^5.2.1",
+    "ink-spinner": "^5.0.0",
+    "ink-text-input": "^6.0.0",
+    "ora": "^8.1.1",
+    "react": "^18.3.1"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "node --eval \"['dist','tsconfig.tsbuildinfo'].forEach(p=>require('fs').rmSync(p,{recursive:true,force:true}))\"",
+    "prebuild": "npm run clean",
+    "prepublishOnly": "npm run build",
+    "dev": "tsx src/index.ts",
+    "relink": "npm unlink -g 2>/dev/null; npm run build && npm link",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

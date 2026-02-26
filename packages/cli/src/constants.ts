@@ -1,0 +1,11 @@
+import type { ContentMode, Provider } from "govuk-rewrite-core";
+
+export const VALID_MODES: ContentMode[] = [
+  "page-body",
+  "error-message",
+  "hint-text",
+  "notification",
+  "button",
+];
+
+export const VALID_PROVIDERS: Provider[] = ["openai", "anthropic", "openrouter"];

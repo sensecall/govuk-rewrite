@@ -7,25 +7,31 @@ export type ContentMode =
   | "notification"
   | "button";
 
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
 export interface RewriteResult {
   rewrittenText: string;
   explanation?: string[];
   issues?: string[];
+  usage?: TokenUsage;
 }
 
-export interface Config {
+export interface EngineOptions {
   provider: Provider;
-  model: string;
-  timeoutMs: number;
+  apiKey: string;
+  model?: string;
+  timeoutMs?: number;
   baseUrl?: string;
-  apiKey?: string;
 }
 
 export interface ProviderOptions {
   apiKey: string;
   model: string;
-  baseUrl?: string;
   timeoutMs: number;
+  baseUrl?: string;
 }
 
 export interface RewriteRequest {
@@ -41,10 +47,6 @@ export type ProviderAdapter = (
   request: RewriteRequest
 ) => Promise<RewriteResult>;
 
-export interface OutputOptions {
-  result: RewriteResult;
-  format: "plain" | "explain" | "json" | "diff" | "check";
+export interface NormalizedEngineOptions extends ProviderOptions {
   provider: Provider;
-  model: string;
-  originalText?: string;
 }
