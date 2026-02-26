@@ -4,17 +4,17 @@ A minimal toolchain for rewriting text into GOV.UK style.
 
 This repository now contains two workspace packages:
 
-- `govuk-rewrite-core`: composable rewrite engine and provider adapters
-- `govuk-rewrite`: CLI wrapper (one-shot mode and interactive `chat` mode)
+- `govuk-rewrite`: composable rewrite engine and provider adapters
+- `govuk-rewrite-cli`: CLI wrapper (one-shot mode and interactive `chat` mode)
 
 ## Packages
 
-### `govuk-rewrite` (CLI)
+### `govuk-rewrite-cli` (CLI)
 
 Install globally:
 
 ```bash
-npm install -g govuk-rewrite
+npm install -g govuk-rewrite-cli
 ```
 
 One-shot rewrite:
@@ -91,10 +91,10 @@ Auto-prompt behavior:
 - In Ink chat, setup prompts are shown inline in the composer.
 - In non-interactive contexts (for example pipes), auto-prompting is disabled.
 
-### `govuk-rewrite-core` (Composable API)
+### `govuk-rewrite` (Composable API)
 
 ```ts
-import { rewrite } from "govuk-rewrite-core";
+import { rewrite } from "govuk-rewrite";
 
 const result = await rewrite(
   {

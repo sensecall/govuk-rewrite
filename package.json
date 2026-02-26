@@ -6,11 +6,11 @@
     "packages/cli"
   ],
   "scripts": {
-    "build": "npm run build -w govuk-rewrite-core && npm run build -w govuk-rewrite",
-    "relink": "npm unlink -g govuk-rewrite 2>/dev/null; npm run build && npm link ./packages/cli",
-    "dev": "npm run build -w govuk-rewrite-core && npm run dev -w govuk-rewrite --",
-    "test": "npm run test -w govuk-rewrite-core && npm run test -w govuk-rewrite",
-    "test:watch": "npm run test:watch -w govuk-rewrite-core"
+    "build": "npm run build -w govuk-rewrite && npm run build -w govuk-rewrite-cli",
+    "relink": "npm unlink -g govuk-rewrite-cli 2>/dev/null; npm run build && npm link ./packages/cli",
+    "dev": "npm run build -w govuk-rewrite && npm run dev -w govuk-rewrite-cli --",
+    "test": "npm run test -w govuk-rewrite && npm run test -w govuk-rewrite-cli",
+    "test:watch": "npm run test:watch -w govuk-rewrite"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

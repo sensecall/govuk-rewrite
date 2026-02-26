@@ -1,8 +1,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
-import { DEFAULT_MODELS, DEFAULT_TIMEOUT_MS } from "govuk-rewrite-core";
-import type { Provider } from "govuk-rewrite-core";
+import { DEFAULT_MODELS, DEFAULT_TIMEOUT_MS } from "govuk-rewrite";
+import type { Provider } from "govuk-rewrite";
 
 export interface ResolvedConfig {
   provider: Provider;

@@ -1,6 +1,6 @@
 {
-  "name": "govuk-rewrite-core",
-  "version": "0.1.0",
+  "name": "govuk-rewrite",
+  "version": "1.0.0",
   "description": "Core engine for GOV.UK rewrite tooling",
   "author": "Dan Sensecall",
   "license": "MIT",
