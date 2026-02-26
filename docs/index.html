@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>govuk-rewrite - GOV.UK Style Rewrite CLI</title>
+  <meta name="description" content="govuk-rewrite is a minimal CLI for rewriting text into GOV.UK style. Works with stdin, pipes, files, and automation scripts.">
+  <meta name="theme-color" content="#0b0c0c">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #0b0c0c;
+      --muted: #505a5f;
+      --border: #b1b4b6;
+      --subtle-bg: #f3f2f1;
+      --header-bg: #0b0c0c;
+      --link: #1d70b8;
+      --link-hover: #003078;
+      --accent: #1d70b8;
+      --focus-bg: #ffdd00;
+      --focus-shadow: #0b0c0c;
+      --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    a {
+      color: var(--link);
+      text-decoration-skip-ink: auto;
+    }
+
+    a:hover {
+      color: var(--link-hover);
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--focus-bg);
+      box-shadow: 0 0 0 3px var(--focus-shadow);
+      outline-offset: 0;
+    }
+
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: 0;
+      z-index: 999;
+      padding: 0.75rem 1rem;
+      background: var(--focus-bg);
+      color: var(--text);
+      font-weight: 700;
+      font-size: 0.9375rem;
+      text-decoration: none;
+    }
+
+    .skip-link:focus {
+      top: 0;
+    }
+
+    .container {
+      max-width: 56rem;
+      margin: 0 auto;
+      padding: 0 1.25rem;
+    }
+
+    .site-header {
+      background: var(--header-bg);
+      border-bottom: 4px solid var(--accent);
+      padding: 1rem 0;
+    }
+
+    .site-header .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .site-title {
+      color: #ffffff;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 1.1rem;
+      text-decoration: none;
+    }
+
+    .site-title:hover {
+      color: #ffffff;
+      text-decoration: underline;
+    }
+
+    .github-link {
+      color: #b1b4b6;
+      font-size: 0.9rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .github-link:hover {
+      color: #ffffff;
+    }
+
+    section {
+      padding: 2.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    section:last-of-type {
+      border-bottom: none;
+    }
+
+    h1 {
+      font-size: clamp(1.7rem, 5vw, 2.6rem);
+      line-height: 1.15;
+      margin-bottom: 0.8rem;
+    }
+
+    h2 {
+      font-size: 1.3rem;
+      line-height: 1.3;
+      margin-bottom: 1rem;
+    }
+
+    h3 {
+      font-size: 1rem;
+      margin-bottom: 0.4rem;
+    }
+
+    p {
+      margin-bottom: 0.9rem;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .hero {
+      padding-top: 3rem;
+      padding-bottom: 2.75rem;
+    }
+
+    .hero p {
+      max-width: 40rem;
+    }
+
+    .install-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 0.4rem;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      background: var(--subtle-bg);
+      border-radius: 4px;
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.9em;
+      background: var(--subtle-bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0.08em 0.32em;
+    }
+
+    pre {
+      background: #0b0c0c;
+      color: #f3f2f1;
+      padding: 0.9rem 1rem;
+      border-radius: 4px;
+      overflow-x: auto;
+      margin-top: 0.4rem;
+      margin-bottom: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      line-height: 1.55;
+      tab-size: 2;
+    }
+
+    pre code {
+      background: none;
+      border: none;
+      color: inherit;
+      padding: 0;
+      font-size: inherit;
+    }
+
+    .feature-grid {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .feature-grid li {
+      border-left: 3px solid var(--accent);
+      background: var(--subtle-bg);
+      border-radius: 0 3px 3px 0;
+      padding: 0.8rem 0.9rem;
+    }
+
+    .feature-grid strong {
+      display: block;
+      margin-bottom: 0.2rem;
+      font-size: 0.95rem;
+    }
+
+    .feature-grid span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.95rem 1rem;
+      background: #ffffff;
+    }
+
+    .card ol,
+    .card ul {
+      margin-left: 1.1rem;
+      margin-top: 0.45rem;
+    }
+
+    .card li {
+      margin-bottom: 0.45rem;
+    }
+
+    .note {
+      margin-top: 0.7rem;
+      padding: 0.7rem 0.8rem;
+      border-left: 3px solid var(--accent);
+      background: var(--subtle-bg);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .example {
+      margin-bottom: 1.2rem;
+    }
+
+    .example:last-child {
+      margin-bottom: 0;
+    }
+
+    .example p {
+      font-size: 0.92rem;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 0.7rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    thead th {
+      text-align: left;
+      border-bottom: 2px solid var(--text);
+      padding: 0.55rem 0.7rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody td {
+      padding: 0.52rem 0.7rem;
+      vertical-align: top;
+    }
+
+    tbody td:last-child {
+      color: var(--muted);
+    }
+
+    .site-footer {
+      border-top: 1px solid var(--border);
+      padding: 1.8rem 0;
+    }
+
+    .site-footer .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 520px) {
+      .install-box {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <header class="site-header" role="banner">
+    <div class="container">
+      <a href="." class="site-title" aria-label="govuk-rewrite home">govuk-rewrite</a>
+      <a href="https://github.com/sensecall/govuk-rewrite" class="github-link" aria-label="View govuk-rewrite on GitHub">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        GitHub
+      </a>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="container">
+        <h1 id="hero-title">Rewrite text into GOV.UK style from your terminal</h1>
+        <p class="muted">A minimal CLI for plain English, active voice, and clear actions. It is designed for scripts and pipelines: stdout stays clean, JSON is available when needed, and behavior is explicit.</p>
+        <div class="install-box" aria-label="Install command">
+          <code>npm install -g govuk-rewrite</code>
+        </div>
+        <p class="muted">or run once with <code>npx govuk-rewrite "your text"</code></p>
+      </div>
+    </section>
+
+    <section aria-labelledby="features-title">
+      <div class="container">
+        <h2 id="features-title">What it does</h2>
+        <ul class="feature-grid" role="list">
+          <li>
+            <strong>Rewrite mode</strong>
+            <span>Default output is rewritten text only.</span>
+          </li>
+          <li>
+            <strong>Explain mode</strong>
+            <span>Add short bullet explanations with <code>--explain</code>.</span>
+          </li>
+          <li>
+            <strong>Check mode</strong>
+            <span>Audit style issues without rewriting using <code>--check</code>.</span>
+          </li>
+          <li>
+            <strong>Diff mode</strong>
+            <span>Show line-by-line changes with <code>--diff</code>.</span>
+          </li>
+          <li>
+            <strong>JSON mode</strong>
+            <span>Return machine-readable output with <code>--json</code>.</span>
+          </li>
+          <li>
+            <strong>Pipe-safe output</strong>
+            <span>No spinner artifacts in piped output.</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section aria-labelledby="behavior-title">
+      <div class="container">
+        <h2 id="behavior-title">How it behaves</h2>
+        <div class="two-col">
+          <article class="card" aria-labelledby="input-title">
+            <h3 id="input-title">Input resolution</h3>
+            <ol>
+              <li>If stdin is piped, read stdin.</li>
+              <li>Else, join positional args into one string.</li>
+              <li>If empty, print help to stderr and exit code <code>2</code>.</li>
+            </ol>
+            <p class="note">If stdin and args are both present, stdin wins.</p>
+          </article>
+
+          <article class="card" aria-labelledby="output-title">
+            <h3 id="output-title">Output selection</h3>
+            <ol>
+              <li><code>--json</code></li>
+              <li><code>--check</code></li>
+              <li><code>--diff</code></li>
+              <li><code>--explain</code></li>
+              <li>plain output (default)</li>
+            </ol>
+            <p class="note"><code>--json</code> prints JSON only. No extra text is added.</p>
+          </article>
+        </div>
+
+        <div class="two-col">
+          <article class="card" aria-labelledby="tty-title">
+            <h3 id="tty-title">TTY behavior</h3>
+            <ul>
+              <li>Spinner shows only when stdout is a TTY.</li>
+              <li>Disable spinner with <code>--no-spinner</code>.</li>
+              <li>Spinner label is <code>Rewriting…</code>.</li>
+            </ul>
+          </article>
+
+          <article class="card" aria-labelledby="copy-title">
+            <h3 id="copy-title">Clipboard behavior</h3>
+            <ul>
+              <li>On successful interactive runs, rewritten text is copied to clipboard.</li>
+              <li>Disable auto-copy with <code>--no-copy</code>.</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="examples-title">
+      <div class="container">
+        <h2 id="examples-title">Examples</h2>
+
+        <div class="example">
+          <p>Basic rewrite</p>
+          <pre><code>govuk-rewrite "Please kindly complete the form below"</code></pre>
+        </div>
+
+        <div class="example">
+          <p>Rewrite with explanations</p>
+          <pre><code>govuk-rewrite --explain "Please kindly complete the form below"</code></pre>
+        </div>
+
+        <div class="example">
+          <p>Audit style issues only</p>
+          <pre><code>govuk-rewrite --check "Thank you for your kind submission"</code></pre>
+        </div>
+
+        <div class="example">
+          <p>Compare before and after</p>
+          <pre><code>govuk-rewrite --diff "Please be advised that forms must be submitted by Friday"</code></pre>
+        </div>
+
+        <div class="example">
+          <p>Pipe input and get JSON</p>
+          <pre><code>cat draft.txt | govuk-rewrite --json --explain</code></pre>
+        </div>
+
+        <div class="example">
+          <p>Use a mode and context</p>
+          <pre><code>govuk-rewrite --mode error-message --context "HMRC self-assessment" "Sorry, something went wrong. Please try again."</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="options-title">
+      <div class="container">
+        <h2 id="options-title">CLI options</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Flag</th>
+                <th scope="col">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>--explain</code></td>
+                <td>Include short bullet explanations of key changes</td>
+              </tr>
+              <tr>
+                <td><code>--diff</code></td>
+                <td>Show a line diff between original and rewritten text</td>
+              </tr>
+              <tr>
+                <td><code>--check</code></td>
+                <td>Audit text for GOV.UK style issues without rewriting</td>
+              </tr>
+              <tr>
+                <td><code>--json</code></td>
+                <td>Output JSON only (scripting and automation)</td>
+              </tr>
+              <tr>
+                <td><code>--context &lt;text&gt;</code></td>
+                <td>Add service or audience context</td>
+              </tr>
+              <tr>
+                <td><code>--mode &lt;type&gt;</code></td>
+                <td><code>page-body</code> | <code>error-message</code> | <code>hint-text</code> | <code>notification</code> | <code>button</code></td>
+              </tr>
+              <tr>
+                <td><code>--provider &lt;name&gt;</code></td>
+                <td><code>openai</code> | <code>anthropic</code> | <code>openrouter</code></td>
+              </tr>
+              <tr>
+                <td><code>--model &lt;name&gt;</code></td>
+                <td>Model name for the chosen provider</td>
+              </tr>
+              <tr>
+                <td><code>--config &lt;path&gt;</code></td>
+                <td>Path to config file</td>
+              </tr>
+              <tr>
+                <td><code>--timeout &lt;ms&gt;</code></td>
+                <td>Request timeout in milliseconds</td>
+              </tr>
+              <tr>
+                <td><code>--no-spinner</code></td>
+                <td>Disable spinner</td>
+              </tr>
+              <tr>
+                <td><code>--no-copy</code></td>
+                <td>Disable automatic clipboard copy</td>
+              </tr>
+              <tr>
+                <td><code>-v, --version</code></td>
+                <td>Show version</td>
+              </tr>
+              <tr>
+                <td><code>-h, --help</code></td>
+                <td>Show help</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="config-title">
+      <div class="container">
+        <h2 id="config-title">Configuration and providers</h2>
+        <p class="muted">Configuration precedence is: CLI flags -> environment variables -> config file -> defaults.</p>
+
+        <div class="two-col">
+          <article class="card" aria-labelledby="keys-title">
+            <h3 id="keys-title">API key environment variables</h3>
+            <ul>
+              <li>OpenAI: <code>OPENAI_API_KEY</code></li>
+              <li>Anthropic: <code>ANTHROPIC_API_KEY</code></li>
+              <li>OpenRouter: <code>OPENROUTER_API_KEY</code></li>
+            </ul>
+          </article>
+
+          <article class="card" aria-labelledby="env-title">
+            <h3 id="env-title">govuk-rewrite environment variables</h3>
+            <ul>
+              <li><code>GOVUK_REWRITE_PROVIDER</code></li>
+              <li><code>GOVUK_REWRITE_MODEL</code></li>
+              <li><code>GOVUK_REWRITE_TIMEOUT_MS</code></li>
+              <li><code>GOVUK_REWRITE_BASE_URL</code></li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="two-col">
+          <article class="card" aria-labelledby="file-title">
+            <h3 id="file-title">Config file location</h3>
+            <ul>
+              <li>macOS/Linux: <code>~/.config/govuk-rewrite/config.json</code></li>
+              <li>Windows: <code>%APPDATA%\govuk-rewrite\config.json</code></li>
+              <li>Override with <code>--config &lt;path&gt;</code></li>
+            </ul>
+          </article>
+
+          <article class="card" aria-labelledby="defaults-title">
+            <h3 id="defaults-title">Default values</h3>
+            <ul>
+              <li>provider: <code>openai</code></li>
+              <li>model: <code>gpt-4.1-mini</code></li>
+              <li>timeout: <code>30000</code> ms</li>
+            </ul>
+            <p class="note">If provider changes and model is not explicitly set, a provider-specific default model is selected.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="exit-title">
+      <div class="container">
+        <h2 id="exit-title">Exit codes</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Code</th>
+                <th scope="col">Meaning</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>0</code></td>
+                <td>Success</td>
+              </tr>
+              <tr>
+                <td><code>1</code></td>
+                <td>Runtime, provider, or key/config error</td>
+              </tr>
+              <tr>
+                <td><code>2</code></td>
+                <td>Usage error (for example: empty input or invalid option)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="container">
+      <span>govuk-rewrite - MIT Licence</span>
+      <a href="https://github.com/sensecall/govuk-rewrite">View source on GitHub</a>
+    </div>
+  </footer>
+</body>
+</html>
