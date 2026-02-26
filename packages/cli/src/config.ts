@@ -1,6 +1,6 @@
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { DEFAULT_MODELS, DEFAULT_TIMEOUT_MS } from "govuk-rewrite-core";
 import type { Provider } from "govuk-rewrite-core";
 
@@ -12,7 +12,7 @@ export interface ResolvedConfig {
   apiKey?: string;
 }
 
-interface PartialConfig {
+export interface ConfigFileData {
   provider?: Provider;
   model?: string;
   timeoutMs?: number;
@@ -26,7 +26,17 @@ export interface CliOverrides {
   config?: string;
 }
 
-function configFilePath(): string {
+export const PROVIDER_API_KEY_ENV_VARS: Record<Provider, string> = {
+  openai: "OPENAI_API_KEY",
+  anthropic: "ANTHROPIC_API_KEY",
+  openrouter: "OPENROUTER_API_KEY",
+};
+
+export function getApiKeyEnvVarForProvider(provider: Provider): string {
+  return PROVIDER_API_KEY_ENV_VARS[provider];
+}
+
+export function getDefaultConfigFilePath(): string {
   if (process.platform === "win32") {
     return join(process.env["APPDATA"] ?? homedir(), "govuk-rewrite", "config.json");
   }
@@ -40,25 +50,49 @@ function toProvider(value?: string): Provider | undefined {
   return undefined;
 }
 
-function loadConfigFile(customPath?: string): PartialConfig {
-  const filePath = customPath ?? configFilePath();
+function sanitiseConfigFileData(input: ConfigFileData): ConfigFileData {
+  const result: ConfigFileData = {};
+
+  const provider = toProvider(input.provider);
+  if (provider) result.provider = provider;
+
+  if (typeof input.model === "string" && input.model.trim()) {
+    result.model = input.model.trim();
+  }
+
+  if (typeof input.timeoutMs === "number" && Number.isFinite(input.timeoutMs)) {
+    result.timeoutMs = Math.trunc(input.timeoutMs);
+  }
+
+  if (typeof input.baseUrl === "string" && input.baseUrl.trim()) {
+    result.baseUrl = input.baseUrl.trim();
+  }
+
+  return result;
+}
+
+export function readConfigFile(customPath?: string): ConfigFileData {
+  const filePath = customPath ?? getDefaultConfigFilePath();
   try {
     const raw = readFileSync(filePath, "utf8");
-    const parsed = JSON.parse(raw) as PartialConfig;
-    const result: PartialConfig = {};
-    const provider = toProvider(parsed.provider);
-    if (provider) result.provider = provider;
-    if (parsed.model) result.model = parsed.model;
-    if (typeof parsed.timeoutMs === "number") result.timeoutMs = parsed.timeoutMs;
-    if (parsed.baseUrl) result.baseUrl = parsed.baseUrl;
-    return result;
+    const parsed = JSON.parse(raw) as ConfigFileData;
+    return sanitiseConfigFileData(parsed);
   } catch {
     return {};
   }
 }
 
-function loadEnvVars(): PartialConfig {
-  const result: PartialConfig = {};
+export function writeConfigFile(config: ConfigFileData, customPath?: string): void {
+  const filePath = customPath ?? getDefaultConfigFilePath();
+  const sanitized = sanitiseConfigFileData(config);
+
+  mkdirSync(dirname(filePath), { recursive: true });
+  writeFileSync(filePath, `${JSON.stringify(sanitized, null, 2)}\n`, "utf8");
+}
+
+function loadEnvVars(): ConfigFileData {
+  const result: ConfigFileData = {};
+
   const provider = toProvider(process.env["GOVUK_REWRITE_PROVIDER"]);
   if (provider) result.provider = provider;
 
@@ -84,7 +118,7 @@ export function resolveConfig(cliOverrides: CliOverrides = {}): ResolvedConfig {
     timeoutMs: DEFAULT_TIMEOUT_MS,
   };
 
-  const fileConfig = loadConfigFile(cliOverrides.config);
+  const fileConfig = readConfigFile(cliOverrides.config);
   const envConfig = loadEnvVars();
 
   const merged: ResolvedConfig = {
@@ -98,8 +132,7 @@ export function resolveConfig(cliOverrides: CliOverrides = {}): ResolvedConfig {
   if (cliOverrides.model) merged.model = cliOverrides.model;
   if (cliOverrides.timeout) merged.timeoutMs = cliOverrides.timeout;
 
-  const modelExplicitlySet =
-    fileConfig.model ?? envConfig.model ?? cliOverrides.model;
+  const modelExplicitlySet = fileConfig.model ?? envConfig.model ?? cliOverrides.model;
   if (!modelExplicitlySet) {
     merged.model = DEFAULT_MODELS[merged.provider];
   }
@@ -110,10 +143,5 @@ export function resolveConfig(cliOverrides: CliOverrides = {}): ResolvedConfig {
 }
 
 export function resolveApiKeyForProvider(provider: Provider): string | undefined {
-  const keyMap: Record<Provider, string> = {
-    openai: "OPENAI_API_KEY",
-    anthropic: "ANTHROPIC_API_KEY",
-    openrouter: "OPENROUTER_API_KEY",
-  };
-  return process.env[keyMap[provider]];
+  return process.env[getApiKeyEnvVarForProvider(provider)];
 }

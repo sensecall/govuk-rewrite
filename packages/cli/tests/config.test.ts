@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { resolveConfig } from "../src/config.js";
+import { mkdtempSync, rmSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { readConfigFile, resolveConfig, writeConfigFile } from "../src/config.js";
 
 describe("resolveConfig", () => {
   const originalEnv = { ...process.env };
@@ -59,5 +62,30 @@ describe("resolveConfig", () => {
     process.env["GOVUK_REWRITE_TIMEOUT_MS"] = "invalid";
     const config = resolveConfig();
     expect(config.timeoutMs).toBe(30000);
+  });
+
+  it("writes and reads config file values used by setup", () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "govuk-rewrite-config-test-"));
+    const configPath = join(tempDir, "config.json");
+
+    try {
+      writeConfigFile(
+        {
+          provider: "openrouter",
+          model: "openai/gpt-4.1-mini",
+          timeoutMs: 45000,
+          baseUrl: "https://proxy.example",
+        },
+        configPath
+      );
+
+      const loaded = readConfigFile(configPath);
+      expect(loaded.provider).toBe("openrouter");
+      expect(loaded.model).toBe("openai/gpt-4.1-mini");
+      expect(loaded.timeoutMs).toBe(45000);
+      expect(loaded.baseUrl).toBe("https://proxy.example");
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 });

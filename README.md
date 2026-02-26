@@ -35,6 +35,12 @@ Pipe input:
 echo "Click here to find out more" | govuk-rewrite
 ```
 
+First-time setup wizard:
+
+```bash
+govuk-rewrite setup
+```
+
 Interactive mode:
 
 ```bash
@@ -57,6 +63,20 @@ Interactive commands:
 /show
 /quit
 ```
+
+### Setup flow
+
+- `govuk-rewrite setup` runs an interactive wizard.
+- The wizard writes provider/model/timeout/baseUrl to your config file.
+- API keys are never written to config files.
+- The wizard prints the exact `export ...` command for your selected provider key.
+- Optional verification can run a small live request before finishing.
+
+Auto-prompt behavior:
+
+- In one-shot and `chat` modes, if the API key is missing and both stdin/stdout are TTY, the CLI asks:
+  - `No API key found. Run setup now? [Y/n]`
+- In non-interactive contexts (for example pipes), auto-prompting is disabled.
 
 ### `govuk-rewrite-core` (Composable API)
 

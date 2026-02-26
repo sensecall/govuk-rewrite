@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { runOneShot } from "./oneshot.js";
 import { runChat } from "./chat.js";
 import { VALID_MODES } from "./constants.js";
+import { buildSetupNonInteractiveMessage, runSetup, SetupUsageError, supportsInteractiveSetup } from "./setup.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -70,6 +71,7 @@ Examples:
   $ govuk-rewrite --diff --context "HMRC self-assessment" "Please ensure you complete the form"
   $ govuk-rewrite --provider anthropic "Your application has been received"
   $ govuk-rewrite chat --provider openai
+  $ govuk-rewrite setup
 
 Environment variables:
   OPENAI_API_KEY           API key for OpenAI (default provider)
@@ -103,6 +105,27 @@ program
   .option("--copy", "Auto-copy result to clipboard")
   .action(async (opts) => {
     await runChat(opts);
+  });
+
+program
+  .command("setup")
+  .description("Run first-time setup wizard")
+  .option("--config <path>", "Path to config.json to write")
+  .action(async (opts: { config?: string }) => {
+    if (!supportsInteractiveSetup(Boolean(process.stdin.isTTY), Boolean(process.stdout.isTTY))) {
+      process.stderr.write(buildSetupNonInteractiveMessage(opts.config) + "\n");
+      process.exit(2);
+    }
+
+    try {
+      await runSetup({ configPath: opts.config });
+    } catch (err) {
+      if (err instanceof SetupUsageError) {
+        process.stderr.write(`${err.message}\n`);
+        process.exit(err.exitCode);
+      }
+      throw err;
+    }
   });
 
 program.parseAsync(process.argv).catch((err: unknown) => {

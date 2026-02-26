@@ -3,12 +3,14 @@ import ora from "ora";
 import { rewrite } from "govuk-rewrite-core";
 import type { ContentMode } from "govuk-rewrite-core";
 import { resolveApiKeyForProvider, resolveConfig } from "./config.js";
+import type { CliOverrides, ResolvedConfig } from "./config.js";
 import { VALID_MODES, VALID_PROVIDERS } from "./constants.js";
 import { writeMissingApiKeyError } from "./errors.js";
 import { applyChatCommand } from "./chat-commands.js";
 import type { ChatState } from "./chat-commands.js";
 import { shouldUseSpinner, writeClipboard } from "./io.js";
 import { formatOutput, selectOutputMode } from "./output.js";
+import * as setup from "./setup.js";
 
 export interface ChatOptions {
   explain?: boolean;
@@ -30,6 +32,26 @@ export function supportsInteractiveSession(
   stdoutIsTTY: boolean
 ): boolean {
   return stdinIsTTY && stdoutIsTTY;
+}
+
+export async function resolveConfigForChat(
+  overrides: CliOverrides,
+  setupRunner: typeof setup.maybeRunInteractiveSetupOnMissingKey = setup.maybeRunInteractiveSetupOnMissingKey,
+  configResolver: typeof resolveConfig = resolveConfig
+): Promise<ResolvedConfig> {
+  let config = configResolver(overrides);
+
+  if (!config.apiKey) {
+    const autoSetup = await setupRunner({
+      provider: config.provider,
+      configPath: overrides.config,
+    });
+    if (autoSetup.ran) {
+      config = configResolver(overrides);
+    }
+  }
+
+  return config;
 }
 
 export async function processChatInput(
@@ -113,7 +135,7 @@ export async function runChat(opts: ChatOptions): Promise<void> {
     process.exit(2);
   }
 
-  const config = resolveConfig({
+  let config = await resolveConfigForChat({
     provider: opts.provider,
     model: opts.model,
     timeout: opts.timeout,
@@ -174,12 +196,32 @@ export async function runChat(opts: ChatOptions): Promise<void> {
     const spinner = shouldUseSpinner(state.spinner) ? ora("Rewriting…").start() : null;
 
     try {
-      const apiKey = resolveApiKeyForProvider(state.provider);
+      let apiKey = resolveApiKeyForProvider(state.provider);
       if (!apiKey) {
         spinner?.stop();
-        writeMissingApiKeyError(state.provider);
-        rl.prompt();
-        continue;
+        const askFromReadline = (question: string): Promise<string> =>
+          new Promise((resolve) => rl.question(question, resolve));
+
+        const autoSetup = await setup.maybeRunInteractiveSetupOnMissingKey({
+          provider: state.provider,
+          configPath: opts.config,
+          prompt: askFromReadline,
+        });
+        if (autoSetup.ran) {
+          config = resolveConfig({
+            provider: opts.provider,
+            model: opts.model,
+            timeout: opts.timeout,
+            config: opts.config,
+          });
+        }
+
+        apiKey = resolveApiKeyForProvider(state.provider);
+        if (!apiKey) {
+          writeMissingApiKeyError(state.provider);
+          rl.prompt();
+          continue;
+        }
       }
 
       const result = await rewrite(

@@ -2,10 +2,12 @@ import ora from "ora";
 import { rewrite } from "govuk-rewrite-core";
 import type { ContentMode } from "govuk-rewrite-core";
 import { resolveConfig } from "./config.js";
+import type { CliOverrides, ResolvedConfig } from "./config.js";
 import { writeMissingApiKeyError } from "./errors.js";
 import { isStdinPiped, readStdin, shouldUseSpinner, writeClipboard } from "./io.js";
 import { formatOutput, selectOutputMode } from "./output.js";
 import { VALID_MODES, VALID_PROVIDERS } from "./constants.js";
+import * as setup from "./setup.js";
 
 export interface OneShotOptions {
   explain?: boolean;
@@ -30,6 +32,26 @@ export function resolveInputText(
   if (stdinPiped) return stdinText;
   if (textArgs.length > 0) return textArgs.join(" ");
   return "";
+}
+
+export async function resolveConfigForOneShot(
+  overrides: CliOverrides,
+  setupRunner: typeof setup.maybeRunInteractiveSetupOnMissingKey = setup.maybeRunInteractiveSetupOnMissingKey,
+  configResolver: typeof resolveConfig = resolveConfig
+): Promise<ResolvedConfig> {
+  let config = configResolver(overrides);
+
+  if (!config.apiKey) {
+    const autoSetup = await setupRunner({
+      provider: config.provider,
+      configPath: overrides.config,
+    });
+    if (autoSetup.ran) {
+      config = configResolver(overrides);
+    }
+  }
+
+  return config;
 }
 
 export async function runOneShot(
@@ -60,7 +82,7 @@ export async function runOneShot(
     process.exit(2);
   }
 
-  const config = resolveConfig({
+  const config = await resolveConfigForOneShot({
     provider: opts.provider,
     model: opts.model,
     timeout: opts.timeout,
