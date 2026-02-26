@@ -49,6 +49,7 @@ govuk-rewrite chat
 
 Chat stays open until you run `/quit` or use `Ctrl+C` / `Ctrl+D`.
 The composer uses a Codex-style prompt with placeholder text (`Paste text to rewrite`) and a hint row (`? for shortcuts`).
+When the rewritten text matches your input (after trim/newline normalization), chat adds a subtle system note indicating no improvement is needed.
 
 Interactive commands:
 
@@ -123,6 +124,13 @@ console.log(result.rewrittenText);
 ### Output precedence
 
 `--json` > `--check` > `--diff` > `--explain` > plain
+
+Output details:
+
+- Plain mode prints rewritten text only.
+- `--explain` prepends a bullet when no change is needed:
+  - `No improvement suggested. The text already aligns with GOV.UK style.`
+- `--json` includes `noImprovement: boolean` metadata.
 
 ### Spinner
 

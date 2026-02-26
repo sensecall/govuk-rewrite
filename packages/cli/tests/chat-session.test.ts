@@ -58,6 +58,83 @@ describe("handleSubmittedInput", () => {
     );
   });
 
+  it("adds a no-improvement system note when rewritten text is unchanged", async () => {
+    const rewriteImpl = vi.fn().mockResolvedValue({
+      rewrittenText: "Apply now.",
+      explanation: [],
+      issues: [],
+    });
+
+    const result = await handleSubmittedInput("Apply now.", makeState(), {
+      overrides: {},
+      deps: {
+        rewriteImpl,
+        resolveApiKey: () => "sk-test",
+      },
+    });
+
+    expect(result.shouldExit).toBe(false);
+    expect(result.events.find((event) => event.kind === "assistant")?.text).toContain("Apply now.");
+    expect(
+      result.events.find(
+        (event) =>
+          event.kind === "system" &&
+          event.text.includes("No improvement suggested. The text is already close to GOV.UK style.")
+      )
+    ).toBeDefined();
+  });
+
+  it("does not add no-improvement note when rewritten text changes", async () => {
+    const rewriteImpl = vi.fn().mockResolvedValue({
+      rewrittenText: "Submit your form.",
+      explanation: [],
+      issues: [],
+    });
+
+    const result = await handleSubmittedInput("Please kindly submit your form", makeState(), {
+      overrides: {},
+      deps: {
+        rewriteImpl,
+        resolveApiKey: () => "sk-test",
+      },
+    });
+
+    expect(
+      result.events.find(
+        (event) =>
+          event.kind === "system" &&
+          event.text.includes("No improvement suggested. The text is already close to GOV.UK style.")
+      )
+    ).toBeUndefined();
+  });
+
+  it("does not add no-improvement note in check mode", async () => {
+    const rewriteImpl = vi.fn().mockResolvedValue({
+      rewrittenText: "Apply now.",
+      explanation: [],
+      issues: [],
+    });
+
+    const checkState = { ...makeState(), check: true };
+
+    const result = await handleSubmittedInput("Apply now.", checkState, {
+      overrides: {},
+      deps: {
+        rewriteImpl,
+        resolveApiKey: () => "sk-test",
+      },
+    });
+
+    expect(result.shouldExit).toBe(false);
+    expect(
+      result.events.find(
+        (event) =>
+          event.kind === "system" &&
+          event.text.includes("No improvement suggested. The text is already close to GOV.UK style.")
+      )
+    ).toBeUndefined();
+  });
+
   it("keeps session alive after rewrite errors", async () => {
     const rewriteImpl = vi.fn().mockRejectedValue(new Error("fetch failed"));
 

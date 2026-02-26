@@ -112,6 +112,7 @@ export async function runOneShot(
       provider: config.provider,
       model: config.model,
       originalText: inputText,
+      checkMode: opts.check ?? false,
     });
 
     process.stdout.write(output + "\n");

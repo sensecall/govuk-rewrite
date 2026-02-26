@@ -15,6 +15,7 @@ export interface FormatOutputOptions {
   provider: Provider;
   model: string;
   originalText?: string;
+  checkMode?: boolean;
 }
 
 export function selectOutputMode(flags: OutputFlags): OutputMode {
@@ -23,6 +24,19 @@ export function selectOutputMode(flags: OutputFlags): OutputMode {
   if (flags.diff) return "diff";
   if (flags.explain) return "explain";
   return "plain";
+}
+
+export function normalizeComparableText(text: string): string {
+  return text.replace(/\r\n/g, "\n").trim();
+}
+
+export function detectNoImprovement(
+  originalText: string | undefined,
+  rewrittenText: string,
+  checkMode = false
+): boolean {
+  if (!originalText || checkMode) return false;
+  return normalizeComparableText(originalText) === normalizeComparableText(rewrittenText);
 }
 
 function diffLines(original: string, rewritten: string): string {
@@ -64,7 +78,12 @@ function diffLines(original: string, rewritten: string): string {
 }
 
 export function formatOutput(options: FormatOutputOptions): string {
-  const { result, mode, provider, model, originalText } = options;
+  const { result, mode, provider, model, originalText, checkMode } = options;
+  const noImprovement = detectNoImprovement(
+    originalText,
+    result.rewrittenText,
+    checkMode ?? mode === "check"
+  );
 
   if (mode === "json") {
     return JSON.stringify(
@@ -72,6 +91,7 @@ export function formatOutput(options: FormatOutputOptions): string {
         rewrittenText: result.rewrittenText,
         explanation: result.explanation ?? [],
         issues: result.issues ?? [],
+        noImprovement,
         provider,
         model,
       },
@@ -95,9 +115,11 @@ export function formatOutput(options: FormatOutputOptions): string {
   }
 
   if (mode === "explain") {
-    const bullets = (result.explanation ?? [])
-      .map((point) => `- ${point}`)
-      .join("\n");
+    const points = [...(result.explanation ?? [])];
+    if (noImprovement) {
+      points.unshift("No improvement suggested. The text already aligns with GOV.UK style.");
+    }
+    const bullets = points.map((point) => `- ${point}`).join("\n");
     return `${result.rewrittenText}\n\n--- why this is better ---\n${bullets}`;
   }
 

@@ -10,7 +10,11 @@ import {
   buildMissingApiKeyErrorMessage,
 } from "./errors.js";
 import { writeClipboard } from "./io.js";
-import { formatOutput, selectOutputMode } from "./output.js";
+import {
+  detectNoImprovement,
+  formatOutput,
+  selectOutputMode,
+} from "./output.js";
 import { resolveConfigWithAutoSetup } from "./session-config.js";
 import * as setup from "./setup.js";
 
@@ -262,9 +266,17 @@ export async function handleSubmittedInput(
       provider: nextState.provider,
       model: nextState.model,
       originalText: trimmed,
+      checkMode: nextState.check,
     });
 
     events.push({ kind: "assistant", text: outputText });
+
+    if (detectNoImprovement(trimmed, result.rewrittenText, nextState.check)) {
+      events.push({
+        kind: "system",
+        text: "No improvement suggested. The text is already close to GOV.UK style.",
+      });
+    }
 
     if (nextState.copy && !nextState.check) {
       const copied = clipboardWriter(result.rewrittenText);
