@@ -1,5 +1,5 @@
-import { rewrite } from "govuk-rewrite-core";
-import type { ContentMode, Provider } from "govuk-rewrite-core";
+import { rewrite } from "govuk-rewrite";
+import type { ContentMode, Provider } from "govuk-rewrite";
 import { applyChatCommand } from "./chat-commands.js";
 import type { ChatState } from "./chat-commands.js";
 import { resolveApiKeyForProvider, resolveConfig } from "./config.js";

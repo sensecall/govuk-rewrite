@@ -1,4 +1,4 @@
-import type { Provider, RewriteResult } from "govuk-rewrite-core";
+import type { Provider, RewriteResult } from "govuk-rewrite";
 
 export type OutputMode = "plain" | "explain" | "json" | "diff" | "check";
 

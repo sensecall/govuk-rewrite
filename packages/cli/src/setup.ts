@@ -1,6 +1,6 @@
 import { createInterface } from "node:readline/promises";
-import { DEFAULT_MODELS, DEFAULT_TIMEOUT_MS, rewrite } from "govuk-rewrite-core";
-import type { Provider } from "govuk-rewrite-core";
+import { DEFAULT_MODELS, DEFAULT_TIMEOUT_MS, rewrite } from "govuk-rewrite";
+import type { Provider } from "govuk-rewrite";
 import {
   getApiKeyEnvVarForProvider,
   getDefaultConfigFilePath,

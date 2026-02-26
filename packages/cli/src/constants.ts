@@ -1,4 +1,4 @@
-import type { ContentMode, Provider } from "govuk-rewrite-core";
+import type { ContentMode, Provider } from "govuk-rewrite";
 
 export const VALID_MODES: ContentMode[] = [
   "page-body",

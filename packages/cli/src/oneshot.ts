@@ -1,6 +1,6 @@
 import ora from "ora";
-import { rewrite } from "govuk-rewrite-core";
-import type { ContentMode } from "govuk-rewrite-core";
+import { rewrite } from "govuk-rewrite";
+import type { ContentMode } from "govuk-rewrite";
 import { resolveConfig } from "./config.js";
 import type { CliOverrides, ResolvedConfig } from "./config.js";
 import { writeMissingApiKeyError } from "./errors.js";

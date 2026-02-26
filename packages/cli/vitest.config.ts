@@ -7,7 +7,7 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 export default defineConfig({
   resolve: {
     alias: {
-      "govuk-rewrite-core": resolve(__dirname, "../core/src/index.ts"),
+      "govuk-rewrite": resolve(__dirname, "../core/src/index.ts"),
     },
   },
   test: {

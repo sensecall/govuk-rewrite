@@ -1,6 +1,6 @@
 {
-  "name": "govuk-rewrite",
-  "version": "0.2.0",
+  "name": "govuk-rewrite-cli",
+  "version": "0.1.0",
   "description": "A tiny CLI that rewrites text into GOV.UK-style content",
   "author": "Dan Sensecall",
   "license": "MIT",
@@ -24,7 +24,7 @@
   ],
   "dependencies": {
     "commander": "^12.1.0",
-    "govuk-rewrite-core": "^0.1.0",
+    "govuk-rewrite": "^1.0.0",
     "ink": "^5.2.1",
     "ink-spinner": "^5.0.0",
     "ink-text-input": "^6.0.0",
