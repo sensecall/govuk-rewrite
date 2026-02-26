@@ -150,33 +150,58 @@
     }
 
     .hero {
-      padding-top: 3rem;
-      padding-bottom: 2.75rem;
+      padding-top: 4rem;
+      padding-bottom: 4rem;
+    }
+
+    .hero h1 {
+      margin-bottom: 1.1rem;
     }
 
     .hero p {
       max-width: 40rem;
+      margin-bottom: 0;
     }
 
-    .install-box {
+    .install-block {
+      margin-top: 2rem;
+    }
+
+    .install-block__command {
       display: inline-flex;
       align-items: center;
-      gap: 0.75rem;
-      margin-top: 0.4rem;
-      padding: 0.75rem 1rem;
-      border: 1px solid var(--border);
-      background: var(--subtle-bg);
-      border-radius: 4px;
+      background: #0b0c0c;
+      border-radius: 6px;
+      padding: 0.8rem 1.25rem;
+      margin-bottom: 0.7rem;
+    }
+
+    .install-block__command code {
+      background: none;
+      border: none;
+      color: #f3f2f1;
+      font-size: 1.05rem;
+      padding: 0;
+      letter-spacing: 0.01em;
+    }
+
+    .install-block__alt {
+      color: var(--muted);
+      font-size: 0.925rem;
+      margin-bottom: 0;
     }
 
     .terminal-demo-wrap {
-      margin-top: 1rem;
+      margin-top: 2.5rem;
       max-width: 46rem;
     }
 
     .terminal-demo-label {
-      margin-bottom: 0.45rem;
-      font-size: 0.88rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
       color: var(--muted);
     }
 
@@ -400,7 +425,7 @@
     }
 
     @media (max-width: 520px) {
-      .install-box {
+      .install-block__command {
         width: 100%;
       }
     }
@@ -426,13 +451,15 @@
       <div class="container">
         <h1 id="hero-title">Rewrite text into GOV.UK style from your terminal</h1>
         <p class="muted">A minimal CLI for plain English, active voice, and clear actions. It is designed for scripts and pipelines: stdout stays clean, JSON is available when needed, and behavior is explicit.</p>
-        <div class="install-box" aria-label="Install command">
-          <code>npm install -g govuk-rewrite</code>
+        <div class="install-block">
+          <div class="install-block__command" aria-label="Install command">
+            <code>npm install -g govuk-rewrite</code>
+          </div>
+          <p class="install-block__alt">or run once with <code>npx govuk-rewrite "your text"</code></p>
         </div>
-        <p class="muted">or run once with <code>npx govuk-rewrite "your text"</code></p>
 
         <div class="terminal-demo-wrap" aria-label="Simulated terminal demo">
-          <p class="terminal-demo-label">Simulated terminal example (not a live API call):</p>
+          <p class="terminal-demo-label">Demo</p>
           <div class="terminal-demo">
             <div class="terminal-demo__bar" aria-hidden="true">
               <span class="terminal-demo__dot"></span>
@@ -448,7 +475,7 @@
               id="terminal-demo-replay"
               aria-label="Replay simulated terminal demo"
             >
-              Replay demo
+              Replay
             </button>
           </div>
         </div>
@@ -905,7 +932,7 @@
 
       function setReplayState(running) {
         replayButton.disabled = running;
-        replayButton.textContent = running ? "Playing…" : "Replay demo";
+        replayButton.textContent = running ? "Playing…" : "Replay";
       }
 
       async function playDemo() {
