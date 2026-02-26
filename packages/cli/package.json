@@ -37,6 +37,7 @@
     "prebuild": "npm run clean",
     "prepublishOnly": "npm run build",
     "dev": "tsx src/index.ts",
+    "relink": "npm unlink -g 2>/dev/null; npm run build && npm link",
     "test": "vitest run",
     "test:watch": "vitest"
   },
