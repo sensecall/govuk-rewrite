@@ -74,11 +74,11 @@ describe("handleSubmittedInput", () => {
     });
 
     expect(result.shouldExit).toBe(false);
-    expect(result.events.find((event) => event.kind === "assistant")?.text).toContain("Apply now.");
+    expect(result.events.find((event) => event.kind === "assistant")).toBeUndefined();
     expect(
       result.events.find(
         (event) =>
-          event.kind === "system" &&
+          event.kind === "success" &&
           event.text.includes("No improvement suggested. The text is already close to GOV.UK style.")
       )
     ).toBeDefined();
