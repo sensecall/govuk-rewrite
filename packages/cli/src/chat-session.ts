@@ -31,10 +31,11 @@ export interface ChatOptions {
   timeout?: number;
   spinner: boolean;
   copy?: boolean;
+  tokens?: boolean;
 }
 
 export interface ChatSessionEvent {
-  kind: "assistant" | "system" | "error";
+  kind: "assistant" | "system" | "error" | "success";
   text: string;
 }
 
@@ -147,6 +148,7 @@ export async function bootstrapChatSession(
     json: opts.json ?? false,
     spinner: opts.spinner,
     copy: opts.copy ?? false,
+    tokens: opts.tokens ?? false,
   };
 
   return {
@@ -260,21 +262,29 @@ export async function handleSubmittedInput(
       }
     );
 
-    const outputText = outputFormatter({
-      result,
-      mode: outputModeSelector(nextState),
-      provider: nextState.provider,
-      model: nextState.model,
-      originalText: trimmed,
-      checkMode: nextState.check,
-    });
+    const noImprovement = detectNoImprovement(trimmed, result.rewrittenText, nextState.check);
 
-    events.push({ kind: "assistant", text: outputText });
+    if (noImprovement) {
+      events.push({
+        kind: "success",
+        text: "No improvement suggested. The text is already close to GOV.UK style.",
+      });
+    } else {
+      const outputText = outputFormatter({
+        result,
+        mode: outputModeSelector(nextState),
+        provider: nextState.provider,
+        model: nextState.model,
+        originalText: trimmed,
+        checkMode: nextState.check,
+      });
+      events.push({ kind: "assistant", text: outputText });
+    }
 
-    if (detectNoImprovement(trimmed, result.rewrittenText, nextState.check)) {
+    if (nextState.tokens && result.usage) {
       events.push({
         kind: "system",
-        text: "No improvement suggested. The text is already close to GOV.UK style.",
+        text: `tokens: ${result.usage.inputTokens} in / ${result.usage.outputTokens} out`,
       });
     }
 

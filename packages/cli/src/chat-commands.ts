@@ -15,6 +15,7 @@ export interface ChatState {
   json: boolean;
   spinner: boolean;
   copy: boolean;
+  tokens: boolean;
 }
 
 export interface ChatCommandResult {
@@ -23,27 +24,103 @@ export interface ChatCommandResult {
   quit: boolean;
 }
 
+interface ChatCommandDefinition {
+  name: string;
+  usage?: string;
+  description: string;
+}
+
+export interface ChatCommandSuggestion {
+  command: string;
+  description: string;
+  expectsArgument: boolean;
+}
+
+const CHAT_COMMAND_DEFINITIONS: ChatCommandDefinition[] = [
+  { name: "help", description: "Show available commands" },
+  {
+    name: "provider",
+    usage: `<${VALID_PROVIDERS.join("|")}>`,
+    description: "Set provider and reset model",
+  },
+  { name: "model", usage: "<name>", description: "Set model" },
+  {
+    name: "mode",
+    usage: `<${VALID_MODES.join("|")}>`,
+    description: "Set rewrite mode",
+  },
+  {
+    name: "context",
+    usage: "<text|clear>",
+    description: "Set context text or clear it",
+  },
+  {
+    name: "explain",
+    usage: "on|off",
+    description: "Toggle explanation output",
+  },
+  {
+    name: "check",
+    usage: "on|off",
+    description: "Toggle check mode",
+  },
+  {
+    name: "diff",
+    usage: "on|off",
+    description: "Toggle diff output",
+  },
+  {
+    name: "json",
+    usage: "on|off",
+    description: "Toggle JSON output",
+  },
+  { name: "tokens", usage: "on|off", description: "Show input/output token counts" },
+  { name: "show", description: "Show active settings" },
+  { name: "quit", description: "Exit interactive mode" },
+];
+
+const KNOWN_CHAT_COMMANDS = new Set(
+  CHAT_COMMAND_DEFINITIONS.map((definition) => definition.name)
+);
+
 function parseToggle(value: string): boolean | null {
   if (value === "on") return true;
   if (value === "off") return false;
   return null;
 }
 
+function formatCommandLabel(definition: ChatCommandDefinition): string {
+  return `/${definition.name}${definition.usage ? ` ${definition.usage}` : ""}`;
+}
+
+export function listChatCommandSuggestions(query = ""): ChatCommandSuggestion[] {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  return CHAT_COMMAND_DEFINITIONS
+    .filter((definition) => definition.name.startsWith(normalizedQuery))
+    .map((definition) => ({
+      command: `/${definition.name}`,
+      description: definition.description,
+      expectsArgument: Boolean(definition.usage),
+    }));
+}
+
+export function isKnownChatCommand(token: string): boolean {
+  const normalizedToken = token.trim().toLowerCase();
+  return KNOWN_CHAT_COMMANDS.has(normalizedToken);
+}
+
 export function helpText(): string {
+  const commandColumnWidth = CHAT_COMMAND_DEFINITIONS.reduce((maxWidth, definition) => {
+    return Math.max(maxWidth, formatCommandLabel(definition).length);
+  }, 0);
+
   return [
     "Commands:",
-    "  /help                                Show available commands",
-    "  /provider <openai|anthropic|openrouter>",
-    "  /model <name>                        Set model",
-    "  /mode <page-body|error-message|hint-text|notification|button>",
-    "  /context <text>                      Set context",
-    "  /context clear                       Clear context",
-    "  /explain on|off                      Toggle explanation output",
-    "  /check on|off                        Toggle check mode",
-    "  /diff on|off                         Toggle diff output",
-    "  /json on|off                         Toggle JSON output",
-    "  /show                                Show active settings",
-    "  /quit                                Exit interactive mode",
+    ...CHAT_COMMAND_DEFINITIONS.map((definition) => {
+      const label = formatCommandLabel(definition).padEnd(commandColumnWidth + 2);
+      return `  ${label}${definition.description}`;
+    }),
   ].join("\n");
 }
 
@@ -58,6 +135,7 @@ function stateSummary(state: ChatState): string[] {
     `diff: ${state.diff ? "on" : "off"}`,
     `json: ${state.json ? "on" : "off"}`,
     `copy: ${state.copy ? "on" : "off"}`,
+    `tokens: ${state.tokens ? "on" : "off"}`,
     `spinner: ${state.spinner ? "on" : "off"}`,
   ];
 }
@@ -195,6 +273,18 @@ export function applyChatCommand(input: string, state: ChatState): ChatCommandRe
       return {
         state: { ...state, json: toggle },
         messages: [`JSON output ${toggle ? "enabled" : "disabled"}.`],
+        quit: false,
+      };
+    }
+
+    case "tokens": {
+      const toggle = parseToggle(arg);
+      if (toggle === null) {
+        return { state, messages: ["Usage: /tokens on|off"], quit: false };
+      }
+      return {
+        state: { ...state, tokens: toggle },
+        messages: [`Token counts ${toggle ? "enabled" : "disabled"}.`],
         quit: false,
       };
     }

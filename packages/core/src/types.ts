@@ -7,10 +7,16 @@ export type ContentMode =
   | "notification"
   | "button";
 
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
 export interface RewriteResult {
   rewrittenText: string;
   explanation?: string[];
   issues?: string[];
+  usage?: TokenUsage;
 }
 
 export interface EngineOptions {

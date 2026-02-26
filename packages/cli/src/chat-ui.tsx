@@ -2,6 +2,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Box, Text, useApp, useInput } from "ink";
 import Spinner from "ink-spinner";
 import TextInput from "ink-text-input";
+import {
+  isKnownChatCommand,
+  listChatCommandSuggestions,
+} from "./chat-commands.js";
 import { bootstrapChatSession, handleSubmittedInput } from "./chat-session.js";
 import type {
   ChatBootstrapResult,
@@ -10,9 +14,10 @@ import type {
   ChatSessionEvent,
 } from "./chat-session.js";
 import { ChatRuntimeError, ChatUsageError } from "./chat-session.js";
+import type { ChatCommandSuggestion } from "./chat-commands.js";
 
 interface TranscriptTurn {
-  kind: "user" | "assistant" | "system" | "error";
+  kind: "user" | "assistant" | "system" | "error" | "success";
   text: string;
 }
 
@@ -34,6 +39,12 @@ function truncateForPreview(text: string, limit = 140): string {
   return `${compact.slice(0, limit - 1)}…`;
 }
 
+function getSlashCommandQuery(value: string): string | null {
+  const match = value.match(/^\/([^\s]*)$/);
+  if (!match) return null;
+  return match[1].toLowerCase();
+}
+
 function eventToTurns(event: ChatSessionEvent): TranscriptTurn[] {
   if (event.kind === "assistant") {
     return [{ kind: "assistant", text: event.text }];
@@ -41,12 +52,15 @@ function eventToTurns(event: ChatSessionEvent): TranscriptTurn[] {
   if (event.kind === "error") {
     return [{ kind: "error", text: event.text }];
   }
+  if (event.kind === "success") {
+    return [{ kind: "success", text: event.text }];
+  }
   return [{ kind: "system", text: event.text }];
 }
 
 function helpFooterLines(): string[] {
   return [
-    "Shortcuts: Ctrl+C/Ctrl+D exit · Ctrl+L clear transcript · ? toggle shortcuts",
+    "Shortcuts: Ctrl+C clear input (or exit if empty) · ? toggle shortcuts",
     "Use /help for commands",
   ];
 }
@@ -69,6 +83,10 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
   const [busy, setBusy] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
+  const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
+  const [inputHistory, setInputHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState<number | null>(null);
+  const savedInputRef = useRef<string>("");
 
   const promptRequestRef = useRef<PromptRequest | null>(null);
   useEffect(() => {
@@ -156,17 +174,111 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
       `diff=${state.diff ? "on" : "off"}`,
       `json=${state.json ? "on" : "off"}`,
       `copy=${state.copy ? "on" : "off"}`,
+      `tokens=${state.tokens ? "on" : "off"}`,
     ].join(" | ");
   }, [session]);
 
+  const slashCommandQuery = useMemo(() => {
+    if (promptRequest) return null;
+    return getSlashCommandQuery(inputValue);
+  }, [inputValue, promptRequest]);
+
+  const slashCommandItems = useMemo(() => {
+    if (slashCommandQuery === null) return [];
+    return listChatCommandSuggestions(slashCommandQuery);
+  }, [slashCommandQuery]);
+
+  const showSlashCommandMenu = slashCommandQuery !== null && slashCommandItems.length > 0;
+
+  const selectedCommand: ChatCommandSuggestion | null = showSlashCommandMenu
+    ? (slashCommandItems[selectedCommandIndex] ?? slashCommandItems[0])
+    : null;
+
+  const slashCommandLabelWidth = useMemo(() => {
+    if (slashCommandItems.length === 0) return 0;
+    return slashCommandItems.reduce((maxWidth, item) => {
+      return Math.max(maxWidth, item.command.length);
+    }, 0);
+  }, [slashCommandItems]);
+
+  useEffect(() => {
+    setSelectedCommandIndex(0);
+  }, [slashCommandQuery]);
+
+  useEffect(() => {
+    setSelectedCommandIndex((index) => {
+      if (slashCommandItems.length === 0) return 0;
+      return Math.min(index, slashCommandItems.length - 1);
+    });
+  }, [slashCommandItems.length]);
+
+  useEffect(() => {
+    if (historyIndex === null) {
+      setInputValue(savedInputRef.current);
+    } else {
+      setInputValue(inputHistory[historyIndex] ?? "");
+    }
+  }, [historyIndex, inputHistory]);
+
+  const applySelectedSlashCommand = useCallback((): boolean => {
+    if (slashCommandItems.length === 0) return false;
+    const command = slashCommandItems[selectedCommandIndex] ?? slashCommandItems[0];
+    const nextValue = `${command.command}${command.expectsArgument ? " " : ""}`;
+    setInputValue(nextValue);
+    return true;
+  }, [selectedCommandIndex, slashCommandItems]);
+
   useInput((input, key) => {
-    if (key.ctrl && (input === "c" || input === "d")) {
-      setExitCodeAndExit(0);
+    if (!showSlashCommandMenu && key.upArrow) {
+      setHistoryIndex((prev) => {
+        if (inputHistory.length === 0) return null;
+        if (prev === null) {
+          savedInputRef.current = inputValue;
+          return inputHistory.length - 1;
+        }
+        return Math.max(0, prev - 1);
+      });
       return;
     }
 
-    if (key.ctrl && input === "l") {
-      setTranscript([]);
+    if (!showSlashCommandMenu && key.downArrow) {
+      setHistoryIndex((prev) => {
+        if (prev === null) return null;
+        if (prev === inputHistory.length - 1) return null;
+        return prev + 1;
+      });
+      return;
+    }
+
+    if (showSlashCommandMenu && key.upArrow) {
+      setSelectedCommandIndex((index) => {
+        if (slashCommandItems.length === 0) return 0;
+        return (index - 1 + slashCommandItems.length) % slashCommandItems.length;
+      });
+      return;
+    }
+
+    if (showSlashCommandMenu && key.downArrow) {
+      setSelectedCommandIndex((index) => {
+        if (slashCommandItems.length === 0) return 0;
+        return (index + 1) % slashCommandItems.length;
+      });
+      return;
+    }
+
+    if (showSlashCommandMenu && key.tab) {
+      applySelectedSlashCommand();
+      return;
+    }
+
+    if (key.ctrl && input === "c") {
+      if (inputValue.length > 0) {
+        setInputValue("");
+        setHistoryIndex(null);
+        savedInputRef.current = "";
+      } else {
+        setExitCodeAndExit(0);
+      }
       return;
     }
 
@@ -204,6 +316,9 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
     }
 
     appendTurns([{ kind: "user", text: value }]);
+    setInputHistory((prev) => [...prev, value]);
+    setHistoryIndex(null);
+    savedInputRef.current = "";
     setInputValue("");
     setBusy(true);
 
@@ -242,61 +357,107 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
     }
   }, [appendSystemLine, appendTurns, busy, promptRequest, requestPromptAnswer, session, setExitCodeAndExit]);
 
+  const handleInputSubmit = useCallback((rawValue: string): void => {
+    const trimmed = rawValue.trim();
+    const query = getSlashCommandQuery(trimmed);
+
+    if (
+      query !== null &&
+      slashCommandItems.length > 0 &&
+      !isKnownChatCommand(query)
+    ) {
+      applySelectedSlashCommand();
+      return;
+    }
+
+    void handleSubmit(rawValue);
+  }, [applySelectedSlashCommand, handleSubmit, slashCommandItems.length]);
+
   return (
     <Box flexDirection="column">
-      <Text color="cyan">{headerText}</Text>
+      <Box paddingX={1}>
+        <Text color="cyan">{headerText}</Text>
+      </Box>
 
-      <Box flexDirection="column" marginTop={1}>
+      <Box flexDirection="column" marginTop={1} paddingX={1}>
         {transcript.map((turn, index) => {
           const key = `${index}-${turn.kind}`;
           if (turn.kind === "user") {
             return (
-              <Text key={key} color="gray">
+              <Text key={key} dimColor>
                 {`> ${truncateForPreview(turn.text)}`}
               </Text>
             );
           }
           if (turn.kind === "assistant") {
-            return <Text key={key}>{turn.text}</Text>;
+            return (
+              <Box key={key} flexDirection="column">
+                <Text bold>Rewritten:</Text>
+                <Text>{turn.text}</Text>
+              </Box>
+            );
           }
           if (turn.kind === "error") {
             return <Text key={key} color="red">{turn.text}</Text>;
           }
-          return <Text key={key} color="yellow">{turn.text}</Text>;
+          if (turn.kind === "success") {
+            return <Text key={key} color="green">{turn.text}</Text>;
+          }
+          // system
+          return <Text key={key} dimColor>{turn.text}</Text>;
         })}
       </Box>
 
-      <Box flexDirection="column" marginTop={1}>
+      <Box flexDirection="column" marginTop={1} paddingX={1}>
         {busy && !promptRequest && (
-          <Text color="magenta">
-            <Spinner type="dots" /> Rewriting…
-          </Text>
+          <Text color="cyan"><Spinner type="dots" /> Rewriting…</Text>
         )}
 
         {promptRequest && (
           <Text color="yellow">{promptRequest.question}</Text>
         )}
 
+        {!busy && !promptRequest && (
+          <Text dimColor>
+            {selectedCommand
+              ? `${selectedCommand.command} ${selectedCommand.description}`
+              : "Run /help for commands"}
+          </Text>
+        )}
+
         <Box>
           <Text color="gray">{"> "}</Text>
           <TextInput
             value={inputValue}
-            onChange={setInputValue}
-            onSubmit={(value) => {
-              void handleSubmit(value);
-            }}
+            onChange={(val) => setInputValue(val.replace(/[\r\n]+/g, " ").replace(/\s{2,}/g, " "))}
+            onSubmit={handleInputSubmit}
             placeholder={promptRequest ? "" : "Paste text to rewrite"}
           />
         </Box>
 
-        <Text color="gray">? for shortcuts</Text>
+        {showSlashCommandMenu && (
+          <Box flexDirection="column">
+            {slashCommandItems.map((item, index) => {
+              const isSelected = index === selectedCommandIndex;
+              const commandLabel = item.command.padEnd(slashCommandLabelWidth + 2);
+              return (
+                <Box key={item.command}>
+                  <Text color={isSelected ? "cyanBright" : "white"}>{commandLabel}</Text>
+                  <Text dimColor={!isSelected} color={isSelected ? "cyan" : undefined}>
+                    {item.description}
+                  </Text>
+                </Box>
+              );
+            })}
+          </Box>
+        )}
+
+        <Text dimColor>? for shortcuts</Text>
 
         {showHelp && (
           <Box flexDirection="column">
             {helpFooterLines().map((line, index) => (
-              <Text key={`help-${index}`} color="gray">
-                {line}
-              </Text>
+              <Text key={`help-${index}`} dimColor>{line}</Text>
             ))}
           </Box>
         )}

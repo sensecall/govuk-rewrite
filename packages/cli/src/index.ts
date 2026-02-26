@@ -60,6 +60,7 @@ program
   .option("--timeout <ms>", "Request timeout in milliseconds", parseInt)
   .option("--no-spinner", "Disable spinner")
   .option("--no-copy", "Do not auto-copy result to clipboard")
+  .option("--tokens", "Show input/output token counts")
   .addHelpText(
     "after",
     `
@@ -104,6 +105,7 @@ program
   .option("--timeout <ms>", "Request timeout in milliseconds", parseInt)
   .option("--no-spinner", "Disable spinner")
   .option("--copy", "Auto-copy result to clipboard")
+  .option("--tokens", "Show input/output token counts")
   .action(async (opts) => {
     try {
       await runChat(opts);

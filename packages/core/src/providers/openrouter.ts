@@ -27,6 +27,10 @@ interface OpenRouterResponse {
       content: string | null;
     };
   }>;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+  };
   error?: {
     message: string;
     code?: number;
@@ -101,6 +105,13 @@ export async function rewrite(
     parsed = JSON.parse(content) as RewriteResult;
   } catch {
     throw new Error("OpenRouter returned malformed JSON");
+  }
+
+  if (data.usage) {
+    parsed.usage = {
+      inputTokens: data.usage.prompt_tokens,
+      outputTokens: data.usage.completion_tokens,
+    };
   }
 
   return parsed;

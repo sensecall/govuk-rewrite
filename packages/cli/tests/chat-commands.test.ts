@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { applyChatCommand } from "../src/chat-commands.js";
+import {
+  applyChatCommand,
+  isKnownChatCommand,
+  listChatCommandSuggestions,
+} from "../src/chat-commands.js";
 import type { ChatState } from "../src/chat-commands.js";
 
 function makeState(): ChatState {
@@ -46,5 +50,30 @@ describe("applyChatCommand", () => {
     const result = applyChatCommand("/unknown", makeState());
     expect(result.quit).toBe(false);
     expect(result.messages[0]).toContain("Unknown command");
+  });
+});
+
+describe("listChatCommandSuggestions", () => {
+  it("returns all commands for an empty query", () => {
+    const results = listChatCommandSuggestions("");
+    expect(results.length).toBeGreaterThan(5);
+    expect(results[0]?.command).toBe("/help");
+  });
+
+  it("filters commands by prefix", () => {
+    const results = listChatCommandSuggestions("mo");
+    expect(results).toHaveLength(2);
+    expect(results.map((result) => result.command)).toEqual(["/model", "/mode"]);
+  });
+});
+
+describe("isKnownChatCommand", () => {
+  it("returns true for known commands", () => {
+    expect(isKnownChatCommand("help")).toBe(true);
+    expect(isKnownChatCommand("MODEL")).toBe(true);
+  });
+
+  it("returns false for unknown commands", () => {
+    expect(isKnownChatCommand("unknown")).toBe(false);
   });
 });
