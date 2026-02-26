@@ -85,8 +85,16 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
   const [promptRequest, setPromptRequest] = useState<PromptRequest | null>(null);
   const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
   const [inputHistory, setInputHistory] = useState<string[]>([]);
+  const [lastAssistantOutput, setLastAssistantOutput] = useState<string | null>(null);
   const [historyIndex, setHistoryIndex] = useState<number | null>(null);
   const savedInputRef = useRef<string>("");
+
+  // Latest assistant output is prepended at the end so pressing ↑ once always
+  // offers it as a quick way to re-rewrite the result without copy/paste.
+  const navigableHistory = useMemo(
+    () => (lastAssistantOutput ? [...inputHistory, lastAssistantOutput] : inputHistory),
+    [inputHistory, lastAssistantOutput],
+  );
 
   const promptRequestRef = useRef<PromptRequest | null>(null);
   useEffect(() => {
@@ -216,9 +224,9 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
     if (historyIndex === null) {
       setInputValue(savedInputRef.current);
     } else {
-      setInputValue(inputHistory[historyIndex] ?? "");
+      setInputValue(navigableHistory[historyIndex] ?? "");
     }
-  }, [historyIndex, inputHistory]);
+  }, [historyIndex, navigableHistory]);
 
   const applySelectedSlashCommand = useCallback((): boolean => {
     if (slashCommandItems.length === 0) return false;
@@ -231,10 +239,10 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
   useInput((input, key) => {
     if (!showSlashCommandMenu && key.upArrow) {
       setHistoryIndex((prev) => {
-        if (inputHistory.length === 0) return null;
+        if (navigableHistory.length === 0) return null;
         if (prev === null) {
           savedInputRef.current = inputValue;
-          return inputHistory.length - 1;
+          return navigableHistory.length - 1;
         }
         return Math.max(0, prev - 1);
       });
@@ -244,7 +252,7 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
     if (!showSlashCommandMenu && key.downArrow) {
       setHistoryIndex((prev) => {
         if (prev === null) return null;
-        if (prev === inputHistory.length - 1) return null;
+        if (prev === navigableHistory.length - 1) return null;
         return prev + 1;
       });
       return;
@@ -344,6 +352,11 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
       const turns = result.events.flatMap(eventToTurns);
       if (turns.length > 0) {
         appendTurns(turns);
+      }
+
+      const lastAssistant = turns.filter((t) => t.kind === "assistant").at(-1);
+      if (lastAssistant) {
+        setLastAssistantOutput(lastAssistant.text);
       }
 
       if (result.shouldExit) {
