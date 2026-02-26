@@ -169,6 +169,83 @@
       border-radius: 4px;
     }
 
+    .terminal-demo-wrap {
+      margin-top: 1rem;
+      max-width: 46rem;
+    }
+
+    .terminal-demo-label {
+      margin-bottom: 0.45rem;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .terminal-demo {
+      border: 1px solid #2f3133;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #0b0c0c;
+    }
+
+    .terminal-demo__bar {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.6rem;
+      border-bottom: 1px solid #2f3133;
+      background: #1b1d1f;
+      color: #b1b4b6;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+    }
+
+    .terminal-demo__dot {
+      width: 0.56rem;
+      height: 0.56rem;
+      border-radius: 50%;
+      background: #73777a;
+      flex-shrink: 0;
+    }
+
+    .terminal-demo__screen {
+      min-height: 10.8rem;
+      padding: 0.85rem 1rem;
+      color: #f3f2f1;
+      font-family: var(--font-mono);
+      font-size: 0.86rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .terminal-demo__controls {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 0.45rem;
+    }
+
+    .terminal-demo__replay {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 0.28rem 0.6rem;
+      font-family: var(--font-body);
+      font-size: 0.78rem;
+      line-height: 1.2;
+      cursor: pointer;
+    }
+
+    .terminal-demo__replay:hover {
+      background: var(--subtle-bg);
+    }
+
+    .terminal-demo__replay:disabled {
+      opacity: 0.65;
+      cursor: default;
+    }
+
     code {
       font-family: var(--font-mono);
       font-size: 0.9em;
@@ -353,6 +430,28 @@
           <code>npm install -g govuk-rewrite</code>
         </div>
         <p class="muted">or run once with <code>npx govuk-rewrite "your text"</code></p>
+
+        <div class="terminal-demo-wrap" aria-label="Simulated terminal demo">
+          <p class="terminal-demo-label">Simulated terminal example (not a live API call):</p>
+          <div class="terminal-demo">
+            <div class="terminal-demo__bar" aria-hidden="true">
+              <span class="terminal-demo__dot"></span>
+              <span class="terminal-demo__dot"></span>
+              <span class="terminal-demo__dot"></span>
+            </div>
+            <div class="terminal-demo__screen" id="terminal-demo-screen"></div>
+          </div>
+          <div class="terminal-demo__controls">
+            <button
+              type="button"
+              class="terminal-demo__replay"
+              id="terminal-demo-replay"
+              aria-label="Replay simulated terminal demo"
+            >
+              Replay demo
+            </button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -632,5 +731,97 @@
       <a href="https://github.com/sensecall/govuk-rewrite">View source on GitHub</a>
     </div>
   </footer>
+  <script>
+    (function () {
+      const screen = document.getElementById("terminal-demo-screen");
+      const replayButton = document.getElementById("terminal-demo-replay");
+      if (!screen || !replayButton) {
+        return;
+      }
+
+      const command =
+        'govuk-rewrite --explain "Please kindly complete the form below and submit it to us by Friday."';
+      const rewritten = "Complete the form and submit it by Friday.";
+      const separator = "--- why this is better ---";
+      const explanation = [
+        "- Uses active voice and a clear action.",
+        "- Removes filler words and keeps the sentence short.",
+        "- Keeps the deadline direct and easy to scan.",
+      ];
+
+      const prompt = "$ ";
+      const spinnerFrames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+      const typingDelayMs = 22;
+      const spinnerDelayMs = 80;
+      const spinnerTicks = 20;
+
+      let isRunning = false;
+
+      function wait(ms) {
+        return new Promise((resolve) => {
+          window.setTimeout(resolve, ms);
+        });
+      }
+
+      function renderFinal() {
+        screen.textContent =
+          prompt +
+          command +
+          "\n" +
+          rewritten +
+          "\n\n" +
+          separator +
+          "\n" +
+          explanation.join("\n");
+      }
+
+      function setReplayState(running) {
+        replayButton.disabled = running;
+        replayButton.textContent = running ? "Playing…" : "Replay demo";
+      }
+
+      async function playDemo() {
+        if (isRunning) {
+          return;
+        }
+        isRunning = true;
+        setReplayState(true);
+
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          renderFinal();
+          isRunning = false;
+          setReplayState(false);
+          return;
+        }
+
+        let text = prompt;
+        screen.textContent = text;
+
+        for (const ch of command) {
+          text += ch;
+          screen.textContent = text;
+          await wait(typingDelayMs);
+        }
+
+        text += "\n";
+
+        for (let i = 0; i < spinnerTicks; i++) {
+          const frame = spinnerFrames[i % spinnerFrames.length];
+          screen.textContent = text + frame + " Rewriting…";
+          await wait(spinnerDelayMs);
+        }
+
+        renderFinal();
+        isRunning = false;
+        setReplayState(false);
+      }
+
+      replayButton.addEventListener("click", () => {
+        playDemo();
+      });
+
+      playDemo();
+    })();
+  </script>
 </body>
 </html>
