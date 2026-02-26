@@ -41,6 +41,10 @@ const MODE_PROMPTS: Record<ContentMode, string> = {
     "The text is a GOV.UK Notify notification (email or SMS). Additional rules: plain text only — no markdown, no HTML. Preserve any ((variable)) placeholders exactly as written. For SMS, aim to keep the total under 160 characters.",
   button:
     "The text is a GOV.UK button label. Additional rules: short imperative verb phrase (2–4 words). No punctuation. Start with a capital letter. Examples: 'Continue', 'Save and continue', 'Submit application'.",
+  heading:
+    "The text is a GOV.UK page heading or section heading. Additional rules: use sentence case (capitalise only the first word and proper nouns). No punctuation at the end. Be concise — aim for 8 words or fewer. Use plain, active language. Do not use 'a', 'an', or 'the' at the start unless genuinely necessary. Examples: 'Apply for a passport', 'Check your eligibility'.",
+  "form-label":
+    "The text is a GOV.UK form field label. Additional rules: use sentence case. Be direct and specific — describe exactly what the user should enter or select. No punctuation at the end. Avoid starting with 'Please'. Use natural language rather than field-name style (for example, 'Full name' not 'FullName'). Keep to a short noun phrase where possible.",
 };
 
 export interface ResponseSchema {

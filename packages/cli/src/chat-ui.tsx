@@ -3,8 +3,9 @@ import { Box, Text, useApp, useInput } from "ink";
 import Spinner from "ink-spinner";
 import TextInput from "ink-text-input";
 import {
-  isKnownChatCommand,
   listChatCommandSuggestions,
+  getCompletedCommandName,
+  getCommandGuidance,
 } from "./chat-commands.js";
 import { bootstrapChatSession, handleSubmittedInput } from "./chat-session.js";
 import type {
@@ -202,6 +203,13 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
     ? (slashCommandItems[selectedCommandIndex] ?? slashCommandItems[0])
     : null;
 
+  const completedCommandHint = useMemo(() => {
+    if (promptRequest) return null;
+    const name = getCompletedCommandName(inputValue);
+    if (!name) return null;
+    return getCommandGuidance(name);
+  }, [inputValue, promptRequest]);
+
   const slashCommandLabelWidth = useMemo(() => {
     if (slashCommandItems.length === 0) return 0;
     return slashCommandItems.reduce((maxWidth, item) => {
@@ -371,20 +379,13 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
   }, [appendSystemLine, appendTurns, busy, promptRequest, requestPromptAnswer, session, setExitCodeAndExit]);
 
   const handleInputSubmit = useCallback((rawValue: string): void => {
-    const trimmed = rawValue.trim();
-    const query = getSlashCommandQuery(trimmed);
-
-    if (
-      query !== null &&
-      slashCommandItems.length > 0 &&
-      !isKnownChatCommand(query)
-    ) {
+    if (showSlashCommandMenu) {
       applySelectedSlashCommand();
       return;
     }
 
     void handleSubmit(rawValue);
-  }, [applySelectedSlashCommand, handleSubmit, slashCommandItems.length]);
+  }, [applySelectedSlashCommand, handleSubmit, showSlashCommandMenu]);
 
   return (
     <Box flexDirection="column">
@@ -432,7 +433,9 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
 
         {!busy && !promptRequest && (
           <Text dimColor>
-            {selectedCommand
+            {completedCommandHint
+              ? completedCommandHint
+              : selectedCommand
               ? `${selectedCommand.command} ${selectedCommand.description}`
               : "Run /help for commands"}
           </Text>

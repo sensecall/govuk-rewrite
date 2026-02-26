@@ -27,6 +27,7 @@ export interface ChatCommandResult {
 interface ChatCommandDefinition {
   name: string;
   usage?: string;
+  hint?: string;
   description: string;
 }
 
@@ -41,40 +42,57 @@ const CHAT_COMMAND_DEFINITIONS: ChatCommandDefinition[] = [
   {
     name: "provider",
     usage: `<${VALID_PROVIDERS.join("|")}>`,
+    hint: `Choose a provider: ${VALID_PROVIDERS.join(", ")}`,
     description: "Set provider and reset model",
   },
-  { name: "model", usage: "<name>", description: "Set model" },
+  {
+    name: "model",
+    usage: "<name>",
+    hint: "Type a model name, e.g. gpt-4.1-mini or claude-3-5-haiku-latest",
+    description: "Set model",
+  },
   {
     name: "mode",
     usage: `<${VALID_MODES.join("|")}>`,
+    hint: `Choose a mode: ${VALID_MODES.join(", ")}`,
     description: "Set rewrite mode",
   },
   {
     name: "context",
     usage: "<text|clear>",
+    hint: "Type context text describing your service or audience, or 'clear' to remove it",
     description: "Set context text or clear it",
   },
   {
     name: "explain",
     usage: "on|off",
+    hint: "Type on to include bullet explanations of changes, or off to disable",
     description: "Toggle explanation output",
   },
   {
     name: "check",
     usage: "on|off",
+    hint: "Type on to audit style only without rewriting, or off to disable",
     description: "Toggle check mode",
   },
   {
     name: "diff",
     usage: "on|off",
+    hint: "Type on to show a line-by-line diff, or off to disable",
     description: "Toggle diff output",
   },
   {
     name: "json",
     usage: "on|off",
+    hint: "Type on for machine-readable JSON output, or off to disable",
     description: "Toggle JSON output",
   },
-  { name: "tokens", usage: "on|off", description: "Show input/output token counts" },
+  {
+    name: "tokens",
+    usage: "on|off",
+    hint: "Type on to show input and output token counts after each request, or off to hide",
+    description: "Show input/output token counts",
+  },
   { name: "show", description: "Show active settings" },
   { name: "quit", description: "Exit interactive mode" },
 ];
@@ -108,6 +126,18 @@ export function listChatCommandSuggestions(query = ""): ChatCommandSuggestion[] 
 export function isKnownChatCommand(token: string): boolean {
   const normalizedToken = token.trim().toLowerCase();
   return KNOWN_CHAT_COMMANDS.has(normalizedToken);
+}
+
+export function getCompletedCommandName(value: string): string | null {
+  const match = value.match(/^\/([^\s]+)\s/);
+  if (!match) return null;
+  const cmd = match[1].toLowerCase();
+  return KNOWN_CHAT_COMMANDS.has(cmd) ? cmd : null;
+}
+
+export function getCommandGuidance(name: string): string | null {
+  const definition = CHAT_COMMAND_DEFINITIONS.find((d) => d.name === name);
+  return definition?.hint ?? null;
 }
 
 export function helpText(): string {

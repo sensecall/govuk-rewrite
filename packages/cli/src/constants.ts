@@ -6,6 +6,8 @@ export const VALID_MODES: ContentMode[] = [
   "hint-text",
   "notification",
   "button",
+  "heading",
+  "form-label",
 ];
 
 export const VALID_PROVIDERS: Provider[] = ["openai", "anthropic", "openrouter"];

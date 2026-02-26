@@ -5,7 +5,9 @@ export type ContentMode =
   | "error-message"
   | "hint-text"
   | "notification"
-  | "button";
+  | "button"
+  | "heading"
+  | "form-label";
 
 export interface TokenUsage {
   inputTokens: number;
