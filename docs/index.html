@@ -480,6 +480,10 @@
             <span>Return machine-readable output with <code>--json</code>.</span>
           </li>
           <li>
+            <strong>Interactive mode</strong>
+            <span>Iterative rewrites in a persistent session with slash commands and history.</span>
+          </li>
+          <li>
             <strong>Pipe-safe output</strong>
             <span>No spinner artifacts in piped output.</span>
           </li>
@@ -567,6 +571,130 @@
         <div class="example">
           <p>Use a mode and context</p>
           <pre><code>govuk-rewrite --mode error-message --context "HMRC self-assessment" "Sorry, something went wrong. Please try again."</code></pre>
+        </div>
+
+        <div class="example">
+          <p>Start an interactive session</p>
+          <pre><code>govuk-rewrite chat</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="chat-title">
+      <div class="container">
+        <h2 id="chat-title">Interactive mode</h2>
+        <p class="muted">Start a persistent session to rewrite text iteratively. Settings persist across submissions until you change them with a slash command.</p>
+
+        <div class="example" style="margin-top: 1rem;">
+          <p>Launch with</p>
+          <pre><code>govuk-rewrite chat</code></pre>
+        </div>
+
+        <p>The header bar shows the current session state — provider, model, mode, and which output options are active. All flags accepted by the one-shot command are also accepted by <code>chat</code>.</p>
+
+        <h3 style="margin-top: 1.5rem; margin-bottom: 0.6rem;">Slash commands</h3>
+        <p class="muted" style="margin-bottom: 0.6rem;">Type <code>/</code> to trigger autocomplete. Press <code>Tab</code> to complete.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Command</th>
+                <th scope="col">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>/help</code></td>
+                <td>Show available commands</td>
+              </tr>
+              <tr>
+                <td><code>/provider &lt;openai|anthropic|openrouter&gt;</code></td>
+                <td>Set provider and reset model to its default</td>
+              </tr>
+              <tr>
+                <td><code>/model &lt;name&gt;</code></td>
+                <td>Set model</td>
+              </tr>
+              <tr>
+                <td><code>/mode &lt;page-body|error-message|hint-text|notification|button&gt;</code></td>
+                <td>Set content type for the rewrite</td>
+              </tr>
+              <tr>
+                <td><code>/context &lt;text&gt;</code></td>
+                <td>Set service or audience context</td>
+              </tr>
+              <tr>
+                <td><code>/context clear</code></td>
+                <td>Remove the current context</td>
+              </tr>
+              <tr>
+                <td><code>/explain on|off</code></td>
+                <td>Toggle bullet explanations of changes</td>
+              </tr>
+              <tr>
+                <td><code>/check on|off</code></td>
+                <td>Toggle style audit mode (no rewriting)</td>
+              </tr>
+              <tr>
+                <td><code>/diff on|off</code></td>
+                <td>Toggle line diff output</td>
+              </tr>
+              <tr>
+                <td><code>/json on|off</code></td>
+                <td>Toggle JSON output</td>
+              </tr>
+              <tr>
+                <td><code>/tokens on|off</code></td>
+                <td>Show input and output token counts after each request</td>
+              </tr>
+              <tr>
+                <td><code>/show</code></td>
+                <td>Print all active session settings</td>
+              </tr>
+              <tr>
+                <td><code>/quit</code></td>
+                <td>Exit interactive mode</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 1.5rem; margin-bottom: 0.6rem;">Keyboard shortcuts</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Key</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>↑</code> (first press)</td>
+                <td>Load the latest rewrite output into the input — re-rewrite without copy/pasting</td>
+              </tr>
+              <tr>
+                <td><code>↑</code> (subsequent)</td>
+                <td>Step back through submitted input history</td>
+              </tr>
+              <tr>
+                <td><code>↓</code></td>
+                <td>Move forward through history, back to the current draft</td>
+              </tr>
+              <tr>
+                <td><code>Tab</code></td>
+                <td>Complete a slash command</td>
+              </tr>
+              <tr>
+                <td><code>Ctrl+C</code></td>
+                <td>Clear input; press again when empty to exit</td>
+              </tr>
+              <tr>
+                <td><code>?</code></td>
+                <td>Toggle keyboard shortcut help</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
