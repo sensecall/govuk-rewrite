@@ -1,17 +1,17 @@
-# govuk-rewrite
+# @sensecall/govuk-rewrite
 
 Composable rewrite engine for GOV.UK-style content. Provider-agnostic — works with OpenAI, Anthropic, and OpenRouter.
 
 ## Install
 
 ```bash
-npm install govuk-rewrite
+npm install @sensecall/govuk-rewrite
 ```
 
 ## Usage
 
 ```ts
-import { rewrite } from "govuk-rewrite";
+import { rewrite } from "@sensecall/govuk-rewrite";
 
 const result = await rewrite(
   {
@@ -93,7 +93,7 @@ export OPENROUTER_API_KEY=sk-or-...
 
 ## CLI
 
-If you want a command-line interface rather than the library, install [`govuk-rewrite-cli`](https://www.npmjs.com/package/govuk-rewrite-cli) instead.
+If you want a command-line interface rather than the library, install [`@sensecall/govuk-rewrite-cli`](https://www.npmjs.com/package/@sensecall/govuk-rewrite-cli) instead.
 
 ## Repository
 

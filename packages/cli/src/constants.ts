@@ -1,4 +1,4 @@
-import type { ContentMode, Provider } from "govuk-rewrite";
+import type { ContentMode, Provider } from "@sensecall/govuk-rewrite";
 
 export const VALID_MODES: ContentMode[] = [
   "page-body",

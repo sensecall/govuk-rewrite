@@ -4,16 +4,21 @@ This repo is an npm workspace with two publishable packages:
 
 | Package | Path | npm |
 |---|---|---|
-| `govuk-rewrite` | `packages/core` | Core library |
-| `govuk-rewrite-cli` | `packages/cli` | CLI tool |
+| `@sensecall/govuk-rewrite` | `packages/core` | Core library |
+| `@sensecall/govuk-rewrite-cli` | `packages/cli` | CLI tool |
 
 ## Version strategy
 
-- `govuk-rewrite` (core) and `govuk-rewrite-cli` are versioned independently.
+- `@sensecall/govuk-rewrite` (core) and `@sensecall/govuk-rewrite-cli` are versioned independently.
 - Both packages are always released together in the same PR and git tag.
 - Use a single `v<major>.<minor>.<patch>` tag on `main` for the release.
 - Follow semver: patch for fixes, minor for new features, major for breaking changes.
-- `govuk-rewrite-cli` depends on `govuk-rewrite ^<major>.<minor>.0` — update this if the core minor or major version changes.
+- `@sensecall/govuk-rewrite-cli` depends on `@sensecall/govuk-rewrite ^<major>.<minor>.0`.
+
+## Required repository secrets
+
+- `NPM_TOKEN`: npm automation token with publish rights.
+- `GITHUB_TOKEN` is provided automatically by GitHub Actions.
 
 ## Release process
 
@@ -38,26 +43,34 @@ In `packages/cli/package.json`:
 
 If the core version changed, also update the dep in `packages/cli/package.json`:
 ```json
-"govuk-rewrite": "^X.Y.0"
+"@sensecall/govuk-rewrite": "^X.Y.0"
 ```
 
-### 3. Commit
+### 3. Run local checks
 
 ```bash
-git add packages/core/package.json packages/cli/package.json
+npm ci
+npm run build
+npm test
+cd packages/core && npm pack --dry-run && cd ../..
+cd packages/cli && npm pack --dry-run && cd ../..
+```
+
+### 4. Commit
+
+```bash
+git add package-lock.json packages/core/package.json packages/cli/package.json
 git commit -m "chore: bump versions to vX.Y.Z"
 ```
 
-### 4. Push, open PR, wait for CI
+### 5. Push, open PR, wait for CI
 
 ```bash
 git push -u origin release/vX.Y.Z
 gh pr create --base main --title "chore: release vX.Y.Z"
 ```
 
-CI runs: build, tests, `npm pack --dry-run` on both packages.
-
-### 5. Merge and tag
+### 6. Merge and tag
 
 ```bash
 gh pr merge --merge
@@ -66,41 +79,25 @@ git tag vX.Y.Z
 git push origin vX.Y.Z
 ```
 
-### 6. Publish
-
-```bash
-npm run build
-
-cd packages/core
-npm publish --access public --otp=<code>
-
-cd ../cli
-npm publish --access public --otp=<code>
-```
-
-Publish core before cli — cli depends on core being resolvable on the registry.
+Pushing `vX.Y.Z` triggers `.github/workflows/release.yml`, which publishes both packages to npm and GitHub Packages.
 
 ### 7. Verify
 
-```bash
-npm view govuk-rewrite
-npm view govuk-rewrite-cli
-```
-
-## Deprecating a version
-
-If a version needs to be deprecated (for example after a rename):
+Check workflow status and logs in GitHub Actions, then verify npm artifacts:
 
 ```bash
-npm deprecate govuk-rewrite@"<=X.Y.Z" "Message explaining the change" --otp=<code>
+npm view @sensecall/govuk-rewrite
+npm view @sensecall/govuk-rewrite-cli
 ```
 
-## npm authentication
+Verify GitHub Packages in the repository sidebar and package pages.
+The first GitHub Packages publish defaults to private; set visibility to public if required.
 
-Log in with:
+## Immediate cutover deprecations
+
+After the first scoped release, deprecate old unscoped packages:
 
 ```bash
-npm login
+npm deprecate govuk-rewrite@"*" "Package moved to @sensecall/govuk-rewrite"
+npm deprecate govuk-rewrite-cli@"*" "Package moved to @sensecall/govuk-rewrite-cli"
 ```
-
-npm requires an OTP from your authenticator app on publish and deprecate operations. Pass it with `--otp=<code>` or npm will prompt for it interactively.

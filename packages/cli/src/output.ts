@@ -1,4 +1,4 @@
-import type { Provider, RewriteResult } from "govuk-rewrite";
+import type { Provider, RewriteResult } from "@sensecall/govuk-rewrite";
 
 export type OutputMode = "plain" | "explain" | "json" | "diff" | "check";
 

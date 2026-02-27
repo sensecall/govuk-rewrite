@@ -1,5 +1,5 @@
-import { DEFAULT_MODELS } from "govuk-rewrite";
-import type { ContentMode, Provider } from "govuk-rewrite";
+import { DEFAULT_MODELS } from "@sensecall/govuk-rewrite";
+import type { ContentMode, Provider } from "@sensecall/govuk-rewrite";
 import { VALID_MODES, VALID_PROVIDERS } from "./constants.js";
 
 export interface ChatState {

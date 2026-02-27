@@ -1,4 +1,4 @@
-import type { Provider } from "govuk-rewrite";
+import type { Provider } from "@sensecall/govuk-rewrite";
 
 const KEY_INFO: Record<Provider, { envVar: string; link: string }> = {
   openai: {

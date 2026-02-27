@@ -1,12 +1,12 @@
 {
-  "name": "govuk-rewrite",
+  "name": "@sensecall/govuk-rewrite",
   "version": "1.1.0",
   "description": "Core engine for GOV.UK rewrite tooling",
   "author": "Dan Sensecall",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sensecall/govuk-rewrite",
+    "url": "https://github.com/sensecall/govuk-rewrite.git",
     "directory": "packages/core"
   },
   "sideEffects": false,

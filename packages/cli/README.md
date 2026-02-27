@@ -1,11 +1,11 @@
-# govuk-rewrite-cli
+# @sensecall/govuk-rewrite-cli
 
 A minimal CLI that rewrites text into GOV.UK-style content. Supports one-shot rewrites, piped input, and an interactive chat mode.
 
 ## Install
 
 ```bash
-npm install -g govuk-rewrite-cli
+npm install -g @sensecall/govuk-rewrite-cli
 ```
 
 ## Quick start
@@ -126,7 +126,7 @@ GOVUK_REWRITE_BASE_URL
 
 ## Library
 
-If you want to use the rewrite engine directly in your own code, install [`govuk-rewrite`](https://www.npmjs.com/package/govuk-rewrite) instead.
+If you want to use the rewrite engine directly in your own code, install [`@sensecall/govuk-rewrite`](https://www.npmjs.com/package/@sensecall/govuk-rewrite) instead.
 
 ## Repository
 
