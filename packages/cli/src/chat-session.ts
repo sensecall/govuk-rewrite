@@ -1,7 +1,8 @@
 import { rewrite } from "@sensecall/govuk-rewrite";
 import type { ContentMode, Provider } from "@sensecall/govuk-rewrite";
-import { applyChatCommand } from "./chat-commands.js";
+import { applyChatCommand, isKnownChatCommand } from "./chat-commands.js";
 import type { ChatState } from "./chat-commands.js";
+import { firstSlashToken, isMultiline, normalizeLineEndings } from "./chat-input.js";
 import { resolveApiKeyForProvider, resolveConfig } from "./config.js";
 import type { CliOverrides, ResolvedConfig } from "./config.js";
 import { VALID_MODES, VALID_PROVIDERS } from "./constants.js";
@@ -182,7 +183,26 @@ export async function handleSubmittedInput(
     return { state, events, shouldExit: false };
   }
 
-  if (trimmed.startsWith("/")) {
+  const normalizedInput = normalizeLineEndings(inputText);
+  const hasNewline = isMultiline(normalizedInput);
+  const slashToken = firstSlashToken(normalizedInput);
+
+  if (slashToken && (!hasNewline || isKnownChatCommand(slashToken))) {
+    const commandInput = hasNewline
+      ? (normalizedInput.split("\n", 1)[0]?.trim() ?? "")
+      : trimmed;
+    const command = applyChatCommand(commandInput, state);
+    for (const message of command.messages) {
+      events.push({ kind: "system", text: message });
+    }
+    return {
+      state: command.state,
+      events,
+      shouldExit: command.quit,
+    };
+  }
+
+  if (!hasNewline && trimmed.startsWith("/")) {
     const command = applyChatCommand(trimmed, state);
     for (const message of command.messages) {
       events.push({ kind: "system", text: message });

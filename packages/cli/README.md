@@ -60,7 +60,12 @@ Available modes: `page-body`, `error-message`, `hint-text`, `notification`, `but
 govuk-rewrite chat
 ```
 
-Stays open until `/quit` or `Ctrl+C`. Paste text to rewrite, use `/help` for shortcuts.
+Stays open until `/quit` or `Ctrl+C` when input is empty. Paste text to rewrite, use `/help` for shortcuts.
+Paste multiline content, then press `Enter` to send it.
+The composer stays single-line and switches to a clear `PASTE READY` state with:
+- explicit actions (`Enter` to send, `Ctrl+C` to clear)
+- an unsent preview of the first 2 lines
+- a `+N more lines` summary when applicable
 
 Chat commands:
 
@@ -75,6 +80,7 @@ Chat commands:
 /check on|off
 /diff on|off
 /json on|off
+/tokens on|off
 /show
 /quit
 ```
@@ -82,8 +88,7 @@ Chat commands:
 Chat shortcuts:
 
 ```
-Ctrl+C / Ctrl+D   Exit
-Ctrl+L            Clear transcript
+Ctrl+C            Clear input (or exit if empty)
 ?                 Toggle shortcut help
 ```
 

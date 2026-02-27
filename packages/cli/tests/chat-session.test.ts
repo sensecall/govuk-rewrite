@@ -14,6 +14,7 @@ function makeState(): ChatState {
     json: false,
     spinner: true,
     copy: false,
+    tokens: false,
   };
 }
 
@@ -34,6 +35,43 @@ describe("handleSubmittedInput", () => {
 
     expect(result.shouldExit).toBe(false);
     expect(result.events[0]?.text).toContain("Unknown command");
+  });
+
+  it("treats multiline unknown slash input as rewrite content", async () => {
+    const rewriteImpl = vi.fn().mockResolvedValue({
+      rewrittenText: "Updated content.",
+      explanation: [],
+      issues: [],
+    });
+
+    const result = await handleSubmittedInput("/unknown command\nsecond line", makeState(), {
+      overrides: {},
+      deps: {
+        rewriteImpl,
+        resolveApiKey: () => "sk-test",
+      },
+    });
+
+    expect(rewriteImpl).toHaveBeenCalledOnce();
+    expect(result.shouldExit).toBe(false);
+    expect(result.events.find((event) => event.kind === "assistant")?.text).toContain("Updated content.");
+    expect(result.events.find((event) => event.text.includes("Unknown command"))).toBeUndefined();
+  });
+
+  it("executes known slash commands from the first line of multiline input", async () => {
+    const rewriteImpl = vi.fn();
+
+    const result = await handleSubmittedInput("/help\nsecond line", makeState(), {
+      overrides: {},
+      deps: {
+        rewriteImpl,
+      },
+    });
+
+    expect(rewriteImpl).not.toHaveBeenCalled();
+    expect(result.shouldExit).toBe(false);
+    expect(result.events[0]?.kind).toBe("system");
+    expect(result.events[0]?.text).toContain("Commands:");
   });
 
   it("keeps session alive after successful rewrite", async () => {

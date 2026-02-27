@@ -7,6 +7,7 @@ import {
   getCompletedCommandName,
   getCommandGuidance,
 } from "./chat-commands.js";
+import { buildPendingPreviewLines, isMultiline, sanitizeChatInput } from "./chat-input.js";
 import { bootstrapChatSession, handleSubmittedInput } from "./chat-session.js";
 import type {
   ChatBootstrapResult,
@@ -61,7 +62,7 @@ function eventToTurns(event: ChatSessionEvent): TranscriptTurn[] {
 
 function helpFooterLines(): string[] {
   return [
-    "Shortcuts: Ctrl+C clear input (or exit if empty) · ? toggle shortcuts",
+    "Shortcuts: Enter submit · Ctrl+C clear input (or exit if empty) · ? toggle shortcuts",
     "Use /help for commands",
   ];
 }
@@ -88,6 +89,7 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
   const [inputHistory, setInputHistory] = useState<string[]>([]);
   const [lastAssistantOutput, setLastAssistantOutput] = useState<string | null>(null);
   const [historyIndex, setHistoryIndex] = useState<number | null>(null);
+  const [pendingMultilineDraft, setPendingMultilineDraft] = useState<string | null>(null);
   const savedInputRef = useRef<string>("");
 
   // Latest assistant output is prepended at the end so pressing ↑ once always
@@ -230,22 +232,51 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
 
   useEffect(() => {
     if (historyIndex === null) {
-      setInputValue(savedInputRef.current);
+      setPendingMultilineDraft(null);
+      setInputValue(sanitizeChatInput(savedInputRef.current));
     } else {
-      setInputValue(navigableHistory[historyIndex] ?? "");
+      const value = sanitizeChatInput(navigableHistory[historyIndex] ?? "");
+      if (isMultiline(value)) {
+        setPendingMultilineDraft(value);
+        setInputValue("");
+      } else {
+        setPendingMultilineDraft(null);
+        setInputValue(value);
+      }
     }
   }, [historyIndex, navigableHistory]);
+
+  const pendingMultilinePreview = useMemo(() => {
+    if (!pendingMultilineDraft) return null;
+    return buildPendingPreviewLines(pendingMultilineDraft, 2, 90);
+  }, [pendingMultilineDraft]);
 
   const applySelectedSlashCommand = useCallback((): boolean => {
     if (slashCommandItems.length === 0) return false;
     const command = slashCommandItems[selectedCommandIndex] ?? slashCommandItems[0];
     const nextValue = `${command.command}${command.expectsArgument ? " " : ""}`;
+    setPendingMultilineDraft(null);
     setInputValue(nextValue);
+    setHistoryIndex(null);
+    savedInputRef.current = "";
     return true;
   }, [selectedCommandIndex, slashCommandItems]);
 
+  const handleInputChange = useCallback((rawValue: string): void => {
+    const value = sanitizeChatInput(rawValue);
+    if (isMultiline(value)) {
+      setPendingMultilineDraft(value);
+      setInputValue("");
+      setHistoryIndex(null);
+      savedInputRef.current = "";
+      return;
+    }
+    setPendingMultilineDraft(null);
+    setInputValue(value);
+  }, []);
+
   useInput((input, key) => {
-    if (!showSlashCommandMenu && key.upArrow) {
+    if (!showSlashCommandMenu && !pendingMultilineDraft && key.upArrow) {
       setHistoryIndex((prev) => {
         if (navigableHistory.length === 0) return null;
         if (prev === null) {
@@ -257,7 +288,7 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
       return;
     }
 
-    if (!showSlashCommandMenu && key.downArrow) {
+    if (!showSlashCommandMenu && !pendingMultilineDraft && key.downArrow) {
       setHistoryIndex((prev) => {
         if (prev === null) return null;
         if (prev === navigableHistory.length - 1) return null;
@@ -288,7 +319,8 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
     }
 
     if (key.ctrl && input === "c") {
-      if (inputValue.length > 0) {
+      if (pendingMultilineDraft || inputValue.length > 0) {
+        setPendingMultilineDraft(null);
         setInputValue("");
         setHistoryIndex(null);
         savedInputRef.current = "";
@@ -298,7 +330,13 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
       return;
     }
 
-    if (input === "?" && inputValue.trim().length === 0 && !promptRequest && !busy) {
+    if (
+      input === "?" &&
+      !pendingMultilineDraft &&
+      inputValue.trim().length === 0 &&
+      !promptRequest &&
+      !busy
+    ) {
       setShowHelp((prev) => !prev);
       setInputValue("");
     }
@@ -310,6 +348,7 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
     if (promptRequest) {
       const resolver = promptRequest.resolve;
       setPromptRequest(null);
+      setPendingMultilineDraft(null);
       setInputValue("");
       resolver(rawValue);
       return;
@@ -335,6 +374,7 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
     setInputHistory((prev) => [...prev, value]);
     setHistoryIndex(null);
     savedInputRef.current = "";
+    setPendingMultilineDraft(null);
     setInputValue("");
     setBusy(true);
 
@@ -384,8 +424,13 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
       return;
     }
 
-    void handleSubmit(rawValue);
-  }, [applySelectedSlashCommand, handleSubmit, showSlashCommandMenu]);
+    const pendingValue = pendingMultilineDraft;
+    const valueToSubmit =
+      pendingValue && rawValue.trim().length === 0
+        ? pendingValue
+        : rawValue;
+    void handleSubmit(valueToSubmit);
+  }, [applySelectedSlashCommand, handleSubmit, pendingMultilineDraft, showSlashCommandMenu]);
 
   return (
     <Box flexDirection="column">
@@ -432,22 +477,40 @@ export function ChatUI(props: ChatUIProps): React.JSX.Element {
         )}
 
         {!busy && !promptRequest && (
-          <Text dimColor>
-            {completedCommandHint
-              ? completedCommandHint
-              : selectedCommand
-              ? `${selectedCommand.command} ${selectedCommand.description}`
-              : "Run /help for commands"}
-          </Text>
+          pendingMultilinePreview ? (
+            <Box flexDirection="column">
+              <Text color="yellow" bold>
+                {`PASTE READY: ${pendingMultilinePreview.lineCount} lines captured`}
+              </Text>
+              <Text color="cyan">Enter to send · Ctrl+C to clear</Text>
+              <Text dimColor>Preview (unsent):</Text>
+              {pendingMultilinePreview.previewLines.map((line, index) => (
+                <Text key={`pending-preview-${index}`}>
+                  {`| ${line}`}
+                </Text>
+              ))}
+              {pendingMultilinePreview.remainingLineCount > 0 && (
+                <Text dimColor>{`+${pendingMultilinePreview.remainingLineCount} more lines`}</Text>
+              )}
+            </Box>
+          ) : (
+            <Text dimColor>
+              {completedCommandHint
+                ? completedCommandHint
+                : selectedCommand
+                ? `${selectedCommand.command} ${selectedCommand.description}`
+                : "Run /help for commands"}
+            </Text>
+          )
         )}
 
         <Box>
           <Text color="gray">{"> "}</Text>
           <TextInput
             value={inputValue}
-            onChange={(val) => setInputValue(val.replace(/[\r\n]+/g, " ").replace(/\s{2,}/g, " "))}
+            onChange={handleInputChange}
             onSubmit={handleInputSubmit}
-            placeholder={promptRequest ? "" : "Paste text to rewrite"}
+            placeholder={promptRequest || pendingMultilineDraft ? "" : "Paste text to rewrite"}
           />
         </Box>
 

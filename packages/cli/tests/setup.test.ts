@@ -75,6 +75,33 @@ describe("runSetup", () => {
     });
     expect(writtenConfig).not.toHaveProperty("apiKey");
   });
+
+  it("sanitizes bracketed-paste markers in setup answers", async () => {
+    let writtenConfig: Record<string, unknown> | undefined;
+
+    const result = await runSetup({
+      configPath: "/tmp/govuk-rewrite-test-config.json",
+      stdinIsTTY: true,
+      stdoutIsTTY: true,
+      prompt: promptFromAnswers([
+        "openai",
+        "",
+        "",
+        "",
+        "\u001b[200~sk-proj-test\u001b[201~",
+        "n",
+      ]),
+      readConfig: () => ({}),
+      writeConfig: (config) => {
+        writtenConfig = config as Record<string, unknown>;
+      },
+      writeLine: () => {},
+    });
+
+    expect(result.apiKeySet).toBe(true);
+    expect(result.apiKey).toBe("sk-proj-test");
+    expect(writtenConfig).toEqual({ provider: "openai" });
+  });
 });
 
 describe("maybeRunInteractiveSetupOnMissingKey", () => {
@@ -139,6 +166,28 @@ describe("maybeRunInteractiveSetupOnMissingKey", () => {
 
     expect(result).toEqual({ ran: true, apiKeySet: true });
     expect(process.env["OPENAI_API_KEY"]).toBe("sk-from-setup");
+  });
+
+  it("accepts bracketed-paste markers in yes/no setup prompt", async () => {
+    const runSetupImpl = vi.fn().mockResolvedValue({
+      ran: true,
+      apiKeySet: false,
+      provider: "openai",
+      envVarName: "OPENAI_API_KEY",
+      configPath: "/tmp/config.json",
+    });
+
+    const result = await maybeRunInteractiveSetupOnMissingKey({
+      provider: "openai",
+      stdinIsTTY: true,
+      stdoutIsTTY: true,
+      prompt: async () => "\u001b[200~y\u001b[201~",
+      runSetupImpl,
+      writeLine: () => {},
+    });
+
+    expect(result).toEqual({ ran: true, apiKeySet: false });
+    expect(runSetupImpl).toHaveBeenCalledOnce();
   });
 });
 
