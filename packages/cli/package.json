@@ -1,6 +1,6 @@
 {
   "name": "@sensecall/govuk-rewrite-cli",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A tiny CLI that rewrites text into GOV.UK-style content",
   "author": "Dan Sensecall",
   "license": "MIT",
