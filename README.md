@@ -47,8 +47,13 @@ Interactive mode:
 govuk-rewrite chat
 ```
 
-Chat stays open until you run `/quit` or use `Ctrl+C` / `Ctrl+D`.
+Chat stays open until you run `/quit` or use `Ctrl+C` when the composer is empty.
 The composer uses a Codex-style prompt with placeholder text (`Paste text to rewrite`) and a hint row (`? for shortcuts`).
+Paste multiline content, then press `Enter` to send it.
+The composer remains single-line and switches to a clear `PASTE READY` state with:
+- explicit actions (`Enter` to send, `Ctrl+C` to clear)
+- an unsent preview of the first 2 lines
+- a `+N more lines` summary when applicable
 When the rewritten text matches your input (after trim/newline normalization), chat adds a subtle system note indicating no improvement is needed.
 
 Interactive commands:
@@ -64,6 +69,7 @@ Interactive commands:
 /check on|off
 /diff on|off
 /json on|off
+/tokens on|off
 /show
 /quit
 ```
@@ -71,8 +77,7 @@ Interactive commands:
 Chat shortcuts:
 
 ```text
-Ctrl+C / Ctrl+D   Exit chat
-Ctrl+L            Clear transcript
+Ctrl+C            Clear input (or exit if empty)
 ?                 Toggle shortcut help
 ```
 

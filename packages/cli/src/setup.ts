@@ -7,6 +7,7 @@ import {
   readConfigFile,
   writeConfigFile,
 } from "./config.js";
+import { normalizeLineEndings, stripBracketedPasteMarkers } from "./chat-input.js";
 import type { ConfigFileData } from "./config.js";
 
 const VALID_PROVIDERS: Provider[] = ["openai", "anthropic", "openrouter"];
@@ -67,6 +68,10 @@ export function buildSetupNonInteractiveMessage(customPath?: string): string {
 
 function defaultWriteLine(line: string): void {
   process.stderr.write(`${line}\n`);
+}
+
+function sanitizeInteractiveAnswer(answer: string): string {
+  return normalizeLineEndings(stripBracketedPasteMarkers(answer));
 }
 
 function parseYesNo(answer: string, defaultValue: boolean): boolean | null {
@@ -189,7 +194,7 @@ export async function runSetup(options: SetupOptions = {}): Promise<SetupResult>
     | ReturnType<typeof createInterface>
     | undefined;
 
-  const ask =
+  const rawAsk =
     options.prompt ??
     (async (question: string): Promise<string> => {
       if (!rl) {
@@ -201,6 +206,10 @@ export async function runSetup(options: SetupOptions = {}): Promise<SetupResult>
       }
       return rl.question(question);
     });
+  const ask = async (question: string): Promise<string> => {
+    const answer = await rawAsk(question);
+    return sanitizeInteractiveAnswer(answer);
+  };
 
   try {
     writeLine("govuk-rewrite setup");
@@ -303,7 +312,11 @@ export async function maybeRunInteractiveSetupOnMissingKey(
   }
 
   const writeLine = options.writeLine ?? defaultWriteLine;
-  const ask = options.prompt ?? askWithTemporaryReadline;
+  const rawAsk = options.prompt ?? askWithTemporaryReadline;
+  const ask = async (question: string): Promise<string> => {
+    const answer = await rawAsk(question);
+    return sanitizeInteractiveAnswer(answer);
+  };
 
   const shouldRunSetup = await askYesNo(
     ask,

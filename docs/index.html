@@ -727,6 +727,7 @@
         </div>
 
         <p>The header bar shows the current session state — provider, model, mode, and which output options are active. All flags accepted by the one-shot command are also accepted by <code>chat</code>.</p>
+        <p class="muted">Paste multiline content and press <code>Enter</code> to send. The composer stays single-line and switches to a clear <code>PASTE READY</code> state with explicit actions (<code>Enter</code> send, <code>Ctrl+C</code> clear) plus an unsent preview (first 2 lines and remaining-count summary).</p>
 
         <h3 style="margin-top: 1.5rem; margin-bottom: 0.6rem;">Slash commands</h3>
         <p class="muted" style="margin-bottom: 0.6rem;">Type <code>/</code> to trigger autocomplete. Press <code>Tab</code> to complete.</p>
@@ -820,6 +821,10 @@
               <tr>
                 <td><code>Tab</code></td>
                 <td>Complete a slash command</td>
+              </tr>
+              <tr>
+                <td><code>Enter</code></td>
+                <td>Submit current input (or submit pending multiline paste)</td>
               </tr>
               <tr>
                 <td><code>Ctrl+C</code></td>
